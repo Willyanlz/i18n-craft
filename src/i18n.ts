@@ -1,7 +1,7 @@
 export const messages = {
   pt: {
     sessionSaveError: 'Não foi possível salvar o trabalho nesta sessão. Exporte os arquivos antes de recarregar.',
-    valueMissing: 'Valor não preenchido',
+    valueMissing: 'Valor não preenchido', fillMissing: 'Preencha',
     storageError: 'O navegador não permitiu salvar a configuração de IA.',
     aiModelError: 'Modelo não encontrado ou indisponível para esta API key (404). Selecione um modelo disponível na sua conta em Configurações.',
     aiCredentialsError: 'Acesso negado pelo provedor. Verifique a API key e as permissões da conta.',
@@ -13,7 +13,7 @@ export const messages = {
     emptyTitle: 'Seu próximo projeto fala vários idiomas.', emptyText: 'Adicione a primeira chave ou importe um JSON para começar.',
     keyboard: 'Tab para avançar · Enter para uma nova chave · Pontos para aninhar', preview: 'Prévia JSON', tree: 'Estrutura', copy: 'Copiar JSON', download: 'Baixar JSON', zip: 'Baixar todos (.zip)',
     ai: 'Assistência com IA', aiOff: 'IA desligada', aiOn: 'IA ligada', suggest: 'Sugerir', suggestBatch: 'Sugerir pendentes', generating: 'Traduzindo…', accept: 'Aceitar', reject: 'Recusar', suggestion: 'Sugestão IA',
-    remove: 'Remover chave', interface: 'Idioma da interface', appearance: 'Aparência', light: 'Claro', dark: 'Escuro',
+    remove: 'Remover chave', editingLanguage: 'Idioma em edição', interface: 'Idioma da interface', appearance: 'Aparência', light: 'Claro', dark: 'Escuro',
     settingsText: 'Seu workspace, do seu jeito.', provider: 'Provedor', model: 'Modelo', apiKey: 'API key', apiPlaceholder: 'Insira sua API key',
     aiHelp: 'Sugestões gerais baseadas nos textos do idioma da interface. Preencha esse idioma para sugerir traduções pendentes nos demais.',
     sessionHelp: 'O idioma da interface, provedor, modelo e API key são salvos neste navegador. O projeto é restaurado ao recarregar esta aba.',
@@ -29,7 +29,7 @@ export const messages = {
   },
   en: {
     sessionSaveError: 'Could not save the current session. Export your files before reloading.',
-    valueMissing: 'Value not filled in',
+    valueMissing: 'Value not filled in', fillMissing: 'Fill in',
     storageError: 'The browser could not save AI settings.',
     aiModelError: 'Model not found or unavailable for this API key (404). Select a model available to your account in Settings.',
     aiCredentialsError: 'The provider denied access. Check your API key and account permissions.',
@@ -41,7 +41,7 @@ export const messages = {
     emptyTitle: 'Your next project speaks every language.', emptyText: 'Add your first key or import a JSON to get started.',
     keyboard: 'Tab to move forward · Enter for a new key · Dots for nesting', preview: 'JSON preview', tree: 'Structure', copy: 'Copy JSON', download: 'Download JSON', zip: 'Download all (.zip)',
     ai: 'AI assistance', aiOff: 'AI off', aiOn: 'AI on', suggest: 'Suggest', suggestBatch: 'Suggest missing', generating: 'Translating…', accept: 'Accept', reject: 'Reject', suggestion: 'AI suggestion',
-    remove: 'Remove key', interface: 'Interface language', appearance: 'Appearance', light: 'Light', dark: 'Dark',
+    remove: 'Remove key', editingLanguage: 'Editing language', interface: 'Interface language', appearance: 'Appearance', light: 'Light', dark: 'Dark',
     settingsText: 'Make this workspace yours.', provider: 'Provider', model: 'Model', apiKey: 'API key', apiPlaceholder: 'Enter your API key',
     aiHelp: 'Global suggestions use the text in your interface language. Fill that language to suggest missing translations in the others.',
     sessionHelp: 'Interface language, provider, model and API key are saved in this browser. The project is restored when this tab reloads.',
@@ -57,7 +57,7 @@ export const messages = {
   },
   es: {
     sessionSaveError: 'No se pudo guardar el trabajo en esta sesión. Exporta los archivos antes de recargar.',
-    valueMissing: 'Valor sin completar',
+    valueMissing: 'Valor sin completar', fillMissing: 'Completa',
     storageError: 'El navegador no permitió guardar la configuración de IA.',
     aiModelError: 'Modelo no encontrado o no disponible para esta API key (404). Selecciona un modelo disponible para tu cuenta en Configuración.',
     aiCredentialsError: 'El proveedor denegó el acceso. Comprueba la API key y los permisos de la cuenta.',
@@ -69,7 +69,7 @@ export const messages = {
     emptyTitle: 'Tu próximo proyecto habla varios idiomas.', emptyText: 'Añade la primera clave o importa un JSON para empezar.',
     keyboard: 'Tab para avanzar · Enter para una nueva clave · Puntos para anidar', preview: 'Vista previa JSON', tree: 'Estructura', copy: 'Copiar JSON', download: 'Descargar JSON', zip: 'Descargar todos (.zip)',
     ai: 'Asistencia con IA', aiOff: 'IA desactivada', aiOn: 'IA activada', suggest: 'Sugerir', suggestBatch: 'Sugerir pendientes', generating: 'Traduciendo…', accept: 'Aceptar', reject: 'Rechazar', suggestion: 'Sugerencia IA',
-    remove: 'Eliminar clave', interface: 'Idioma de la interfaz', appearance: 'Apariencia', light: 'Claro', dark: 'Oscuro',
+    remove: 'Eliminar clave', editingLanguage: 'Idioma en edición', interface: 'Idioma de la interfaz', appearance: 'Apariencia', light: 'Claro', dark: 'Oscuro',
     settingsText: 'Tu workspace, a tu manera.', provider: 'Proveedor', model: 'Modelo', apiKey: 'API key', apiPlaceholder: 'Introduce tu API key',
     aiHelp: 'Las sugerencias generales usan los textos del idioma de la interfaz. Completa ese idioma para sugerir traducciones pendientes en los demás.',
     sessionHelp: 'El idioma de la interfaz, proveedor, modelo y API key se guardan en este navegador. El proyecto se restaura al recargar esta pestaña.',

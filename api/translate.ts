@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 type Provider = 'gemini' | 'claude' | 'openai' | 'openrouter';
 type RequestBody = { provider: Provider; model: string; apiKey: string; base: string; targets: string[]; entries: { id: string; key: string; text: string }[] };
 
-const codes = ['pt', 'en', 'es', 'fr', 'de', 'it', 'ja'];
+const codes = ['pt', 'en', 'es', 'fr', 'de', 'it', 'ja', 'nl', 'pl', 'ru', 'zh', 'ko', 'ar', 'hi', 'sv'];
 const providerNames: Record<Provider, string> = { gemini: 'x', claude: 'x', openai: 'x', openrouter: 'x' };
 
 function protectedTokens(value: string): string[] {

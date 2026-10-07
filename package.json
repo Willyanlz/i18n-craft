@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "engines": { "node": "^22.12.0 || ^24.0.0 || >=26.0.0" },
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
@@ -14,6 +16,7 @@
   },
   "dependencies": {
     "fflate": "^0.8.2",
+    "flag-icons": "^7.5.0",
     "lucide-react": "^0.468.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"

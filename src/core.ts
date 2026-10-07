@@ -1,11 +1,19 @@
 export const languages = [
-  { code: 'pt', name: 'Português', short: 'PT', flag: '🇧🇷' },
-  { code: 'en', name: 'English', short: 'EN', flag: '🇺🇸' },
-  { code: 'es', name: 'Español', short: 'ES', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', short: 'FR', flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', short: 'DE', flag: '🇩🇪' },
-  { code: 'it', name: 'Italiano', short: 'IT', flag: '🇮🇹' },
-  { code: 'ja', name: '日本語', short: 'JA', flag: '🇯🇵' },
+  { code: 'pt', name: 'Português', short: 'PT' },
+  { code: 'en', name: 'English', short: 'EN' },
+  { code: 'es', name: 'Español', short: 'ES' },
+  { code: 'fr', name: 'Français', short: 'FR' },
+  { code: 'de', name: 'Deutsch', short: 'DE' },
+  { code: 'it', name: 'Italiano', short: 'IT' },
+  { code: 'ja', name: '日本語', short: 'JA' },
+  { code: 'nl', name: 'Nederlands', short: 'NL' },
+  { code: 'pl', name: 'Polski', short: 'PL' },
+  { code: 'ru', name: 'Русский', short: 'RU' },
+  { code: 'zh', name: '中文', short: 'ZH' },
+  { code: 'ko', name: '한국어', short: 'KO' },
+  { code: 'ar', name: 'العربية', short: 'AR' },
+  { code: 'hi', name: 'हिन्दी', short: 'HI' },
+  { code: 'sv', name: 'Svenska', short: 'SV' },
 ];
 export type Entry = { id: string; key: string; values: Record<string, string> };
 export const newEntry = (): Entry => ({ id: crypto.randomUUID(), key: '', values: {} });
