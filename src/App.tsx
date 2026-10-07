@@ -11,6 +11,8 @@ type Suggestions = Record<string, Record<string, Suggestion>>;
 type ModalName = 'import' | 'export' | 'clear' | null;
 const LOCALE_KEY = 'i18ncraft.locale';
 const readLocale = (): Locale => { try { const value = localStorage.getItem(LOCALE_KEY); return value === 'en' || value === 'es' ? value : 'pt'; } catch { return 'pt'; } };
+const THEME_KEY = 'i18ncraft.theme';
+const readTheme = (): 'light' | 'dark' => { try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch { return 'light'; } };
 const langName = (code: string) => languages.find(l => l.code === code)?.name || code;
 
 function Modal({ title, closeLabel, onClose, children }: { title: string; closeLabel: string; onClose: () => void; children: ReactNode }) {
@@ -27,7 +29,7 @@ export default function App() {
   const [savedProject] = useState(readProjectSession);
   const [locale, setLocale] = useState<Locale>(readLocale);
   const t = (key: MessageKey) => messages[locale][key];
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [theme, setTheme] = useState<'light' | 'dark'>(readTheme);
   const [page, setPage] = useState<'editor' | 'settings'>('editor');
   const [entries, setEntries] = useState<Entry[]>(savedProject.entries);
   const [selected, setSelected] = useState(savedProject.selected);
@@ -52,7 +54,7 @@ export default function App() {
   const currentRef = useRef({ base, selected }); currentRef.current = { base, selected };
   const focusTarget = useRef<string | null>(null);
 
-  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { document.documentElement.dataset.theme = theme; try { localStorage.setItem(THEME_KEY, theme); } catch { /* Theme still applies without storage. */ } }, [theme]);
   useEffect(() => {
     try { saveProjectSession({ entries, selected }); }
     catch { setNotice(messages[locale].sessionSaveError); }

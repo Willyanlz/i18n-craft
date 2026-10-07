@@ -208,3 +208,17 @@ test('mobile layout and dark mode remain usable', async ({ page }) => {
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
+
+test('theme persists across reloads', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Escuro', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('i18ncraft.theme'))).toBe('dark');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.getByRole('button', { name: 'Claro', exact: true }).click();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
+  await expect.poll(async () => page.evaluate(() => localStorage.getItem('i18ncraft.theme'))).toBe('light');
+  await page.reload();
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
+});

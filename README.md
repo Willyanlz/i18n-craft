@@ -87,9 +87,9 @@ Requests send source text through `/api/translate` to the selected provider. Avo
 
 ## Session data and API keys
 
-Keys, translations, and selected languages are saved automatically in `sessionStorage` under `i18ncraft.project`. **Reloading the tab restores your current work**, including unfinished rows. Use **Clear project** to remove the current keys, values, and saved session before starting again. This is session storage, not a permanent project archive; export files for long-term storage. Theme and pending AI suggestions are not restored.
+Keys, translations, and selected languages are saved automatically in `sessionStorage` under `i18ncraft.project`. **Reloading the tab restores your current work**, including unfinished rows. Use **Clear project** to remove the current keys, values, and saved session before starting again. This is session storage, not a permanent project archive; export files for long-term storage. Pending AI suggestions are not restored.
 
-The interface language is saved automatically in `localStorage`. AI settings are also saved automatically under `i18ncraft.ai-settings` in this format:
+The interface language and theme are saved automatically in `localStorage` under `i18ncraft.locale` and `i18ncraft.theme`. AI settings are also saved automatically under `i18ncraft.ai-settings` in this format:
 
 ```json
 {

@@ -22,7 +22,10 @@ describe('JSON editing and merging', () => {
     expect(JSON.parse(buildJson(entries, 'pt'))).toEqual({ automation: 'Label' });
     expect(validateKeys([{ ...newEntry(), key: 'a' }, { ...newEntry(), key: 'a' }]).size).toBe(2);
   });
-  it.each([[], { n: 1 }, { a: {} }, { 'a.b': 'text' }, { ' a': 'text' }, JSON.parse('{"__proto__":{"polluted":"yes"}}')])('rejects unsupported or unsafe input %j', input => {
+  it('accepts dotted keys as literal entry keys', () => {
+    expect(flattenJson({ 'a.b': 'text' })).toEqual({ 'a.b': 'text' });
+  });
+  it.each([[], { n: 1 }, { a: {} }, { ' a': 'text' }, JSON.parse('{"__proto__":{"polluted":"yes"}}')])('rejects unsupported or unsafe input %j', input => {
     expect(() => flattenJson(input)).toThrow();
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
   });
