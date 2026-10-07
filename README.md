@@ -136,15 +136,6 @@ e2e/                  Browser workflow tests
 vercel.json           Build, function, and security-header configuration
 ```
 
-## Deploy to Vercel
-
-1. Push the project to your GitHub repository and import it into Vercel.
-2. Select the Vite preset and a supported Node.js version.
-3. Use `npm run build` as the build command and `dist` as the output directory.
-4. Deploy. Vercel serves `api/translate.ts` as a server function using the configuration in `vercel.json`.
-
-No environment variables or Supabase setup are required: users provide their own API keys in the interface. Other hosting platforms must serve both the frontend and a compatible translation endpoint to support AI assistance.
-
 ## Contributing
 
 Issues and pull requests are welcome. Include a clear description of the problem or proposed improvement, keep changes focused, and run the relevant tests and production build before submitting.
