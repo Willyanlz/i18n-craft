@@ -65,7 +65,7 @@ Keys are shared across selected languages; values are independent. Missing trans
 
 ### Import format
 
-Import JSON objects whose leaf values are strings. Arrays, numbers, nested empty objects, and literal keys containing dots are rejected to avoid ambiguous conversions. Import limits are 2 MB per file, 5,000 keys, and 20 levels of nesting.
+Import JSON objects whose leaf values are strings. Literal dots split nested paths, nested empty objects are skipped, and a leading BOM, trailing commas, or a fragment without outer braces is repaired automatically. Arrays, numbers, and duplicate flattened keys are rejected to avoid ambiguous conversions. A fully empty document is rejected because there is nothing to import. Import limits are 2 MB per file, 5,000 keys, and 20 levels of nesting.
 
 When merging an existing language, choose whether imported values replace existing values or leave them intact.
 

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Braces, Check, ChevronRight, Clipboard, Code2, Download, FileJson, Github, Globe2, Languages, Moon, Plus, Search, Settings2, Sparkles, Sun, Trash2, Upload, X } from 'lucide-react';
 import { strToU8, zipSync } from 'fflate';
-import { buildJson, languages, mergeJson, newEntry, providers, tokensMatch, validateKeys, type Entry, type Provider } from './core';
+import { buildJson, languages, mergeJson, newEntry, parseJsonInput, providers, tokensMatch, validateKeys, type Entry, type Provider } from './core';
 import { messages, type Locale, type MessageKey } from './i18n';
 import { AI_SETTINGS_KEY, readAiSettings } from './ai-settings';
 import { readProjectSession, saveProjectSession } from './project-session';
@@ -121,7 +121,7 @@ export default function App() {
   const importJson = () => {
     try {
       if (new TextEncoder().encode(importText).length > 2 * 1024 * 1024) return setImportError(t('fileSize'));
-      const merged = mergeJson(entries, JSON.parse(importText), importLang, overwrite);
+      const merged = mergeJson(entries, parseJsonInput(importText), importLang, overwrite);
       setEntries(merged); setSuggestions({}); if (!selected.includes(importLang)) setSelected(previous => [...previous, importLang]);
       setQuery(''); setFilter('all'); setModal(null); setImportText(''); setNotice(t('importSuccess'));
     } catch (error) { setImportError(t(error instanceof Error && error.message === 'conflict' ? 'importConflict' : 'importError')); }

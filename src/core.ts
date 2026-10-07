@@ -32,23 +32,45 @@ export function validateKeys(entries: Entry[]): Map<string, string> {
   }
   return errors;
 }
+export function parseJsonInput(raw: string): unknown {
+  const text = raw.replace(/^\uFEFF/, '').trim();
+  if (!text) throw new Error('invalid');
+  try { return JSON.parse(text); } catch { /* try tolerant variants below */ }
+  const noTrailingCommas = text.replace(/,\s*([}\]])/g, '$1');
+  if (noTrailingCommas !== text) {
+    try { return JSON.parse(noTrailingCommas); } catch { /* continue */ }
+  }
+  if (!text.startsWith('{') || !text.endsWith('}')) {
+    try { return JSON.parse(`{${text}}`); } catch { /* continue */ }
+    if (noTrailingCommas !== text) {
+      try { return JSON.parse(`{${noTrailingCommas}}`); } catch { /* continue */ }
+    }
+  }
+  throw new Error('invalid');
+}
 export function flattenJson(value: unknown): Record<string, string> {
   const output: Record<string, string> = Object.create(null);
   let count = 0;
   const visit = (obj: unknown, prefix: string, depth: number) => {
     if (depth > 20) throw new Error('depth');
     if (!obj || typeof obj !== 'object' || Array.isArray(obj)) throw new Error('shape');
-    if (prefix && !Object.keys(obj).length) throw new Error('shape');
+    const keys = Object.keys(obj);
+    if (prefix && !keys.length) return;
+    if (!prefix && !keys.length) throw new Error('shape');
     for (const [key, child] of Object.entries(obj)) {
-      if (!key.trim() || key !== key.trim() || key.includes('.') || forbidden.has(key)) throw new Error('invalid');
+      if (!key.trim() || key !== key.trim() || forbidden.has(key)) throw new Error('invalid');
+      const segments = key.split('.');
+      if (segments.some(p => !p.trim() || p !== p.trim() || forbidden.has(p))) throw new Error('invalid');
       const path = prefix ? `${prefix}.${key}` : key;
       if (path.length > 300) throw new Error('invalid');
+      if (Object.hasOwn(output, path)) throw new Error('conflict');
       if (typeof child === 'string') { output[path] = child; count++; }
       else visit(child, path, depth + 1);
       if (count > 5000) throw new Error('limit');
     }
   };
   visit(value, '', 0);
+  if (!count) throw new Error('shape');
   return output;
 }
 export function buildJson(entries: Entry[], lang: string) {
