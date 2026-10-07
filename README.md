@@ -4,6 +4,13 @@
 
 Define a key once, translate it across languages, and export consistent JSON files. Start from scratch or import existing translations, work with flat or nested keys, and use optional AI suggestions while keeping control over every translation.
 
+## 🚀 Demo
+
+You can test the application in real-time by clicking the link below:
+
+➔ [Access the Live Test here](https://i18n.labswill.com)
+
+
 ## Features
 
 - **Keyboard-first editing** — move between keys and translations with Tab, and create new rows with Enter.
