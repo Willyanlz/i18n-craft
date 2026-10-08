@@ -180,3 +180,6 @@ export const providers = {
   openrouter: { name: 'OpenRouter', model: 'openai/gpt-4.1-mini' },
 };
 export type Provider = keyof typeof providers;
+
+export const langName = (code: string) =>
+  languages.find((lang) => lang.code === code)?.name || code;

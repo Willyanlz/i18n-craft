@@ -153,17 +153,31 @@ npm run test:e2e
 
 ```text
 api/translate.ts       Server endpoint for AI providers
-src/App.tsx           Editor and settings interface
+src/App.tsx           Workspace state, actions, and component composition
+src/components/       Editor, settings, navigation, dialogs, and JSON preview
+src/types.ts          Shared UI types
 src/core.ts           JSON handling and translation validation
 src/i18n.ts           Interface translations
 src/ai-settings.ts    Saved provider, model, and API key settings
-src/styles.css        Responsive light and dark themes
+src/styles.css        CSS entry point and ordered imports
+src/styles/           Base, layout, editor, preview, settings, overlays, responsive
 tests/                Unit and endpoint tests
 e2e/                  Browser workflow tests
 vercel.json           Build, function, and security-header configuration
 ```
 
 ## Contributing
+
+UI components live in `src/components/`, grouped by responsibility rather than by
+individual HTML elements. `TranslationEditor` renders the language tabs and editing
+table; `SettingsPanel`, `ImportDialog`, and `JsonPreview` handle their respective
+screens. `Modal` and `LangPicker` provide shared controls. Project state and actions
+remain in `App.tsx`, while JSON handling and persistence live in their existing
+TypeScript modules.
+
+Styles are split into focused files under `src/styles/`. Keep the import order in
+`src/styles.css`: responsive overrides are applied after shared and component
+styles. Theme variables live in `styles/base.css`.
 
 Issues and pull requests are welcome. Include a clear description of the problem or proposed improvement, keep changes focused, and run the relevant tests and production build before submitting.
 

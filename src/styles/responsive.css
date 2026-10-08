@@ -1,0 +1,284 @@
+@media (min-width: 1600px) {
+  .main-content {
+    padding-top: 48px;
+  }
+  .page-heading {
+    margin-bottom: 36px;
+  }
+  .empty-state {
+    padding-block: 65px;
+  }
+}
+@media (max-width: 1200px) {
+  .sidebar {
+    width: 205px;
+    padding-inline: 12px;
+  }
+  main {
+    margin-left: 205px;
+  }
+  .main-content {
+    padding: 28px 24px 20px;
+  }
+  .topbar {
+    padding-inline: 24px;
+  }
+  .overview {
+    gap: 17px;
+    padding: 20px;
+  }
+  .stat {
+    padding-right: 17px;
+  }
+  .stat-icon {
+    padding: 8px;
+  }
+  .page-heading {
+    align-items: flex-start;
+  }
+  .page-heading .actions {
+    margin-top: 22px;
+  }
+  .ai-switch {
+    font-size: 0;
+    gap: 6px;
+  }
+  .sidebar-note {
+    margin-inline: 10px;
+  }
+  .toast {
+    left: calc(50% + 102px);
+  }
+  .preview-tabs {
+    padding-inline: 12px;
+  }
+  .segmented {
+    gap: 9px;
+  }
+}
+@media (max-width: 950px) {
+  .sidebar {
+    width: 74px;
+    padding: 25px 10px;
+  }
+  .brand {
+    padding: 0;
+    justify-content: center;
+  }
+  .brand > span:last-child,
+  .nav-label,
+  .nav-item > svg ~ svg,
+  .sidebar-note,
+  .sidebar-bottom {
+    display: none;
+  }
+  .brand-icon {
+    width: 38px;
+    height: 40px;
+  }
+  .sidebar nav {
+    margin-top: 36px;
+  }
+  .nav-item {
+    font-size: 0;
+    justify-content: center;
+    padding: 15px;
+    gap: 0;
+  }
+  .nav-item svg {
+    width: 21px;
+  }
+  .nav-item svg:last-child:not(:first-child) {
+    display: none;
+  }
+  main {
+    margin-left: 74px;
+  }
+  .toast {
+    left: calc(50% + 37px);
+  }
+  .session-label {
+    display: none;
+  }
+  .overview {
+    gap: 20px;
+  }
+  .page-heading {
+    flex-wrap: wrap;
+  }
+  .page-heading .actions {
+    margin: 0;
+  }
+}
+@media (max-width: 600px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: 64px;
+    flex-direction: row;
+    padding: 10px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    align-items: center;
+    justify-content: space-between;
+  }
+  .brand > span:last-child {
+    display: block;
+    font-size: 20px;
+  }
+  .brand small {
+    display: none;
+  }
+  .brand-icon {
+    width: 32px;
+    height: 33px;
+  }
+  .sidebar nav {
+    margin: 0;
+    display: flex;
+    gap: 7px;
+  }
+  .nav-item {
+    margin: 0;
+    width: 38px;
+    height: 36px;
+    padding: 8px;
+  }
+  .app-shell {
+    display: block;
+  }
+  main {
+    margin: 0;
+  }
+  .topbar {
+    height: 56px;
+    padding-inline: 18px;
+  }
+  .breadcrumbs {
+    font-size: 10px;
+    gap: 7px;
+  }
+  .topbar-actions {
+    gap: 8px;
+  }
+  .main-content {
+    padding: 26px 16px 18px;
+  }
+  .page-heading {
+    gap: 19px;
+    margin-bottom: 23px;
+  }
+  h1 {
+    font-size: 25px;
+  }
+  .page-heading p {
+    font-size: 11px;
+  }
+  .overview {
+    gap: 13px;
+    padding: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .stat {
+    padding-right: 18px;
+    gap: 9px;
+  }
+  .stat-icon {
+    padding: 7px;
+  }
+  .stat strong {
+    font-size: 21px;
+  }
+  .progress-stat {
+    order: 4;
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .ai-switch {
+    margin-left: auto;
+  }
+  .language-toolbar {
+    padding: 13px;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .language-tabs {
+    gap: 6px;
+  }
+  .language-tab-button {
+    font-size: 10px;
+    padding: 7px 8px;
+  }
+  .lang-tab-name {
+    display: none;
+  }
+  .language-tab small {
+    display: none;
+  }
+  .add-language {
+    font-size: 9px;
+  }
+  .filter-toolbar {
+    padding: 10px 13px;
+    flex-wrap: wrap;
+  }
+  .search-field {
+    min-width: 140px;
+  }
+  .filter-toolbar > select {
+    max-width: 145px;
+  }
+  .editor-footer {
+    font-size: 11px;
+    padding: 11px 13px;
+    line-height: 1.6;
+  }
+  .empty-state {
+    padding: 25px 15px 30px;
+  }
+  .empty-state h2 {
+    font-size: 15px;
+  }
+  .empty-state p {
+    max-width: 250px;
+    margin: 10px auto 20px;
+  }
+  .preview-footer {
+    gap: 10px;
+    padding-inline: 12px;
+  }
+  .preview-footer button {
+    font-size: 8px;
+  }
+  .segmented button {
+    font-size: 9px;
+  }
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-card {
+    padding: 20px;
+  }
+  .toast {
+    left: 50%;
+    width: calc(100% - 32px);
+    font-size: 11px;
+    bottom: 16px;
+  }
+  .modal-inner {
+    padding: 20px;
+  }
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+}
+
+.json-panel {
+  margin-top: 23px;
+}
+
+.project-actions {
+  flex-wrap: wrap;
+  flex-shrink: 1;
+}

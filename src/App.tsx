@@ -1,30 +1,16 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import {
-  Braces,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  Clipboard,
-  Code2,
-  Download,
-  FileJson,
-  Github,
-  Globe2,
-  Languages,
-  Moon,
-  Plus,
-  Search,
-  Settings2,
-  Sparkles,
-  Sun,
-  Trash2,
-  Upload,
-  X,
-} from 'lucide-react';
 import { strToU8, zipSync } from 'fflate';
+import { Braces, Download, FileJson, Globe2, Sparkles, Trash2, Upload, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { AI_SETTINGS_KEY, readAiSettings } from './ai-settings';
+import { ImportDialog } from './components/ImportDialog';
+import { JsonPreview } from './components/JsonPreview';
+import { Modal } from './components/Modal';
+import { SettingsPanel } from './components/SettingsPanel';
+import { Sidebar } from './components/Sidebar';
+import { Topbar } from './components/Topbar';
+import { TranslationEditor } from './components/TranslationEditor';
 import {
   buildJson,
-  languages,
   mergeJson,
   newEntry,
   parseJsonInput,
@@ -32,16 +18,11 @@ import {
   tokensMatch,
   validateKeys,
   type Entry,
-  type Provider,
 } from './core';
-import { flagFor } from './flags';
 import { messages, type Locale, type MessageKey } from './i18n';
-import { AI_SETTINGS_KEY, readAiSettings } from './ai-settings';
 import { readProjectSession, saveProjectSession } from './project-session';
+import type { ModalName, Suggestions } from './types';
 
-type Suggestion = { text: string; source: string; key: string; base: string };
-type Suggestions = Record<string, Record<string, Suggestion>>;
-type ModalName = 'import' | 'export' | 'clear' | null;
 const LOCALE_KEY = 'i18ncraft.locale';
 const readLocale = (): Locale => {
   try {
@@ -59,147 +40,6 @@ const readTheme = (): 'light' | 'dark' => {
     return 'light';
   }
 };
-const langName = (code: string) => languages.find((l) => l.code === code)?.name || code;
-
-function LangPicker({
-  label,
-  value,
-  options,
-  onPick,
-  disabled,
-  add = false,
-}: {
-  label: string;
-  value: string;
-  options: string[];
-  onPick: (code: string) => void;
-  disabled?: boolean;
-  add?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const close = (event: MouseEvent) => {
-      if (!box.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const keys = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('mousedown', close);
-    document.addEventListener('keydown', keys);
-    return () => {
-      document.removeEventListener('mousedown', close);
-      document.removeEventListener('keydown', keys);
-    };
-  }, [open]);
-  return (
-    <div className="lang-picker" ref={box}>
-      <button
-        className="lang-picker-button"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => setOpen((was) => !was)}
-      >
-        <>
-          {add ? (
-            <Plus size={15} />
-          ) : (
-            <img className="lang-flag" src={flagFor(value)} alt="" aria-hidden="true" />
-          )}
-          <span>{add ? label : langName(value)}</span>
-        </>
-        <ChevronDown size={14} />
-      </button>
-      {open && (
-        <ul className="lang-picker-list" role="listbox" aria-label={label}>
-          {options.map((code) => (
-            <li key={code}>
-              <button
-                role="option"
-                aria-selected={code === value}
-                className={code === value ? 'selected' : ''}
-                onClick={() => {
-                  onPick(code);
-                  setOpen(false);
-                }}
-              >
-                <img className="lang-flag" src={flagFor(code)} alt="" aria-hidden="true" />
-                <span>{langName(code)}</span>
-                {code === value && <Check size={14} />}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-function Modal({
-  title,
-  closeLabel,
-  onClose,
-  children,
-}: {
-  title: string;
-  closeLabel: string;
-  onClose: () => void;
-  children: ReactNode;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    const element = dialog.current;
-    element?.showModal();
-    return () => element?.close();
-  }, []);
-  return (
-    <dialog
-      ref={dialog}
-      onCancel={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="modal-inner">
-        <div className="section-heading">
-          <h2>{title}</h2>
-          <button className="icon-button" aria-label={closeLabel} onClick={onClose}>
-            <X size={19} />
-          </button>
-        </div>
-        {children}
-      </div>
-    </dialog>
-  );
-}
-
-function JsonTree({ value }: { value: Record<string, unknown> }) {
-  return (
-    <ul className="json-tree">
-      {Object.entries(value).map(([key, child]) => (
-        <li key={key}>
-          {typeof child === 'object' && child !== null ? (
-            <details open>
-              <summary>
-                <Braces size={14} />
-                {key}
-              </summary>
-              <JsonTree value={child as Record<string, unknown>} />
-            </details>
-          ) : (
-            <div>
-              <span>{key}</span>
-              <em>{String(child) || '""'}</em>
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export default function App() {
   const [savedProject] = useState(readProjectSession);
@@ -572,157 +412,32 @@ export default function App() {
   };
 
   const preview = (
-    <>
-      <div className="preview-tabs">
-        <div className="segmented">
-          <button
-            className={previewMode === 'json' ? 'active' : ''}
-            onClick={() => setPreviewMode('json')}
-          >
-            <Code2 size={15} />
-            {t('preview')}
-          </button>
-          <button
-            className={previewMode === 'tree' ? 'active' : ''}
-            onClick={() => setPreviewMode('tree')}
-          >
-            <Braces size={15} />
-            {t('tree')}
-          </button>
-        </div>
-        <select
-          aria-label={t('preview')}
-          value={previewLang}
-          onChange={(event) => setPreviewLang(event.target.value)}
-        >
-          {selected.map((code) => (
-            <option key={code} value={code}>
-              {code}.json
-            </option>
-          ))}
-        </select>
-      </div>
-      {errors.size ? (
-        <p className="inline-error">{t('invalidExport')}</p>
-      ) : previewMode === 'json' ? (
-        <pre className="code-preview">
-          <code>{json}</code>
-        </pre>
-      ) : (
-        <div className="tree-container">
-          <JsonTree value={JSON.parse(json)} />
-        </div>
-      )}
-      <div className="preview-footer">
-        <span>
-          <span className="status-dot" /> JSON
-        </span>
-        <button onClick={() => void copyJson()} disabled={!!errors.size}>
-          <Clipboard size={15} />
-          {t('copy')}
-        </button>
-        <button
-          onClick={() => download(json, `${previewLang}.json`, 'application/json')}
-          disabled={!!errors.size}
-        >
-          <Download size={15} />
-          {t('download')}
-        </button>
-      </div>
-    </>
+    <JsonPreview
+      previewMode={previewMode}
+      setPreviewMode={setPreviewMode}
+      t={t}
+      previewLang={previewLang}
+      setPreviewLang={setPreviewLang}
+      selected={selected}
+      errors={errors}
+      json={json}
+      copyJson={copyJson}
+      download={download}
+    />
   );
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <a
-          className="brand"
-          href="#"
-          onClick={(event) => {
-            event.preventDefault();
-            setPage('editor');
-          }}
-        >
-          <span className="brand-icon">
-            <Braces size={24} />
-          </span>
-          <span>
-            i18n<span className="brand-light">Craft</span>
-            <small>TRANSLATION WORKSPACE</small>
-          </span>
-        </a>
-        <div className="nav-label">{t('workspace')}</div>
-        <nav>
-          <button
-            className={page === 'editor' ? 'nav-item active' : 'nav-item'}
-            onClick={() => setPage('editor')}
-          >
-            <Languages size={19} />
-            {t('editor')}
-            <ChevronRight size={15} />
-          </button>
-          <button
-            className={page === 'settings' ? 'nav-item active' : 'nav-item'}
-            onClick={() => setPage('settings')}
-          >
-            <Settings2 size={19} />
-            {t('settings')}
-          </button>
-        </nav>
-        <div className="sidebar-note">
-          <span className="note-icon">
-            <Globe2 size={23} />
-          </span>
-          <strong>
-            {t('oneKey')}
-            <br />
-            {t('everyLanguage')}
-          </strong>
-          <p>{t('subtitle')}</p>
-          <div className="tiny-languages">
-            <span>PT</span>
-            <span>EN</span>
-            <span>ES</span>
-            <span>+</span>
-          </div>
-        </div>
-        <div className="sidebar-bottom">
-          <a href="https://github.com/Willyanlz/i18n-craft" target="_blank" rel="noreferrer">
-            <Github size={17} />
-            {t('openSource')}
-          </a>
-          <span className="version">
-            i18nCraft <span>v1.0</span>
-          </span>
-        </div>
-      </aside>
+      <Sidebar setPage={setPage} t={t} page={page} />
       <main>
-        <header className="topbar">
-          <div className="breadcrumbs">
-            {t('workspace')}
-            <ChevronRight size={14} />
-            <strong>{t(page === 'editor' ? 'editor' : 'settings')}</strong>
-          </div>
-          <div className="topbar-actions">
-            <span className="session-label">
-              <span className="status-dot" />
-              {t('memory')}
-            </span>
-            <button
-              className="icon-button"
-              aria-label={t(theme === 'light' ? 'dark' : 'light')}
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-            >
-              {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
-            <LangPicker
-              label={t('interface')}
-              value={locale}
-              options={languages.slice(0, 3).map((lang) => lang.code)}
-              onPick={(code) => setLocale(code as Locale)}
-            />
-          </div>
-        </header>
+        <Topbar
+          t={t}
+          page={page}
+          theme={theme}
+          setTheme={setTheme}
+          locale={locale}
+          setLocale={setLocale}
+        />
         <div className="main-content">
           {page === 'editor' ? (
             <>
@@ -808,451 +523,70 @@ export default function App() {
                   </span>
                 </button>
               </section>
-              <section className="editor-card">
-                <div className="language-toolbar">
-                  <div className="language-tabs" role="tablist" aria-label={t('editingLanguage')}>
-                    {selected.map((code) => {
-                      const pending = pendingByLang[code] || 0;
-                      const isActive = code === active;
-                      return (
-                        <div
-                          className={`language-tab ${isActive ? 'active' : ''} ${code === base ? 'base' : ''}`}
-                          key={code}
-                        >
-                          <button
-                            role="tab"
-                            aria-selected={isActive}
-                            className="language-tab-button"
-                            onClick={() => setActiveLang(code)}
-                            title={`${langName(code)}${pending ? ` · ${pending} ${t('pending')}` : ''}`}
-                          >
-                            <img
-                              className="lang-flag"
-                              src={flagFor(code)}
-                              alt=""
-                              aria-hidden="true"
-                            />
-                            <span className="lang-tab-name">{langName(code)}</span>
-                            {code === base && <small>{t('baseLabel')}</small>}
-                            {pending > 0 && (
-                              <span
-                                className="lang-badge"
-                                aria-label={`${pending} ${t('pending')}`}
-                              >
-                                {pending > 99 ? '99+' : pending}
-                              </span>
-                            )}
-                          </button>
-                          {code !== base && (
-                            <button
-                              className="lang-remove"
-                              aria-label={`${t('removeLanguage')} ${langName(code)}`}
-                              onClick={() => removeLanguage(code)}
-                            >
-                              <X size={13} />
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="add-language-wrap">
-                    <LangPicker
-                      add
-                      label={t('addLanguage')}
-                      value={selected[0]}
-                      options={languages
-                        .filter((lang) => !selected.includes(lang.code))
-                        .map((lang) => lang.code)}
-                      disabled={selected.length === languages.length}
-                      onPick={(code) => {
-                        setSelected((previous) => [...previous, code]);
-                        setActiveLang(code);
-                      }}
-                    />
-                  </div>
-                </div>
-                <div className="filter-toolbar">
-                  <label className="search-field">
-                    <Search size={17} />
-                    <input
-                      aria-label={t('search')}
-                      placeholder={t('search')}
-                      value={query}
-                      onChange={(event) => setQuery(event.target.value)}
-                    />
-                  </label>
-                  <select
-                    aria-label={t('all')}
-                    value={filter}
-                    onChange={(event) => setFilter(event.target.value)}
-                  >
-                    {(['all', 'missing', 'suggestions'] as const).map((item) => (
-                      <option key={item} value={item}>
-                        {t(item)}
-                      </option>
-                    ))}
-                  </select>
-                  {ai && (pendingSources.length > 0 || busy) && (
-                    <button
-                      className="button subtle"
-                      disabled={busy}
-                      title={t('batchHelp')}
-                      onClick={() => void suggest()}
-                    >
-                      <Sparkles size={15} />
-                      {t(busy ? 'generating' : 'suggestBatch')}
-                    </button>
-                  )}
-                </div>
-                <div className="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th className="row-number">#</th>
-                        <th>
-                          {t('key')}
-                          <span className="muted"> / path</span>
-                        </th>
-                        <th>
-                          {langName(active)} {active === base && <small>{t('baseLabel')}</small>}
-                        </th>
-                        <th>
-                          <span className="sr-only">{t('remove')}</span>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {visible.map((entry, index) => {
-                        const item = validSuggestion(entry, active);
-                        const missing = !entry.values[active]?.trim();
-                        const missingId = `missing-${entry.id}-${active}`;
-                        const baseText = active === base ? '' : entry.values[base] || '';
-                        const mismatch =
-                          active !== base &&
-                          entry.values[active] &&
-                          entry.values[base] &&
-                          !tokensMatch(entry.values[base], entry.values[active]);
-                        return (
-                          <tr key={entry.id} className={errors.has(entry.id) ? 'invalid-row' : ''}>
-                            <td className="row-number">{String(index + 1).padStart(2, '0')}</td>
-                            <td className="key-cell">
-                              <input
-                                id={`key-${entry.id}`}
-                                aria-label={`${t('key')} ${index + 1}`}
-                                className="key-input"
-                                value={entry.key}
-                                maxLength={300}
-                                placeholder={t('keyPlaceholder')}
-                                onChange={(event) =>
-                                  updateEntry(entry.id, { key: event.target.value })
-                                }
-                                onKeyDown={(event) => onCellKey(event, false)}
-                              />
-                              {errors.has(entry.id) && (
-                                <span className="field-error">
-                                  {t(errors.get(entry.id) as MessageKey)}
-                                </span>
-                              )}
-                            </td>
-                            <td className="value-cell">
-                              <textarea
-                                id={`value-${entry.id}-${active}`}
-                                rows={2}
-                                className={missing ? 'value-missing' : undefined}
-                                aria-invalid={missing || undefined}
-                                aria-describedby={missing ? missingId : undefined}
-                                aria-label={`${langName(active)}: ${entry.key || index + 1}`}
-                                placeholder={t('fillMissing')}
-                                value={entry.values[active] || ''}
-                                onChange={(event) => setValue(entry, active, event.target.value)}
-                                onKeyDown={(event) =>
-                                  onCellKey(event, index === visible.length - 1)
-                                }
-                              />
-                              {baseText ? (
-                                <span className="base-reference">
-                                  <img
-                                    className="lang-flag"
-                                    src={flagFor(base)}
-                                    alt=""
-                                    aria-hidden="true"
-                                  />
-                                  <span className="sr-only">{`${langName(base)}: `}</span>
-                                  <span className="base-reference-text">{baseText}</span>
-                                </span>
-                              ) : null}
-                              {missing && (
-                                <span id={missingId} className="sr-only">
-                                  {t('valueMissing')}
-                                </span>
-                              )}
-                              {mismatch && <span className="field-error">{t('tokenLabel')}</span>}
-                              {item && (
-                                <div className="suggestion">
-                                  <span>
-                                    <Sparkles size={12} />
-                                    {t('suggestion')}
-                                  </span>
-                                  <p>{item.text}</p>
-                                  <div>
-                                    <button onClick={() => dismissSuggestion(entry, active, true)}>
-                                      <Check size={13} />
-                                      {t('accept')}
-                                    </button>
-                                    <button onClick={() => dismissSuggestion(entry, active, false)}>
-                                      <X size={13} />
-                                      {t('reject')}
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </td>
-                            <td>
-                              <button
-                                className="icon-button delete-button"
-                                aria-label={`${t('remove')} ${entry.key}`}
-                                onClick={() => {
-                                  setEntries((previous) =>
-                                    previous.filter((item) => item.id !== entry.id),
-                                  );
-                                  setSuggestions((previous) => {
-                                    const next = { ...previous };
-                                    delete next[entry.id];
-                                    return next;
-                                  });
-                                }}
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {!entries.length ? (
-                  <div className="empty-state">
-                    <div className="empty-art">
-                      <div className="floating-code">{'{ }'}</div>
-                      <Globe2 size={47} strokeWidth={1.25} />
-                      <div className="floating-lang">Aa</div>
-                    </div>
-                    <h2>{t('emptyTitle')}</h2>
-                    <p>{t('emptyText')}</p>
-                    <button className="button primary" onClick={addEntry}>
-                      <Plus size={16} />
-                      {t('addKey')}
-                    </button>
-                  </div>
-                ) : !visible.length ? (
-                  <div className="no-matches">{t('noMatches')}</div>
-                ) : null}
-                {entries.length > 0 && (
-                  <button className="add-row" onClick={addEntry}>
-                    <Plus size={17} />
-                    {t('addKey')}
-                  </button>
-                )}
-                <div className="editor-footer">
-                  <span>
-                    <kbd>↵</kbd> {t('keyboard')}
-                  </span>
-                  <span>
-                    {visible.length} {t('keys')}
-                  </span>
-                </div>
-              </section>
+              <TranslationEditor
+                t={t}
+                selected={selected}
+                pendingByLang={pendingByLang}
+                active={active}
+                base={base}
+                setActiveLang={setActiveLang}
+                removeLanguage={removeLanguage}
+                setSelected={setSelected}
+                query={query}
+                setQuery={setQuery}
+                filter={filter}
+                setFilter={setFilter}
+                ai={ai}
+                pendingSources={pendingSources}
+                busy={busy}
+                suggest={suggest}
+                visible={visible}
+                validSuggestion={validSuggestion}
+                errors={errors}
+                updateEntry={updateEntry}
+                onCellKey={onCellKey}
+                setValue={setValue}
+                dismissSuggestion={dismissSuggestion}
+                setEntries={setEntries}
+                setSuggestions={setSuggestions}
+                entries={entries}
+                addEntry={addEntry}
+              />
               <div className="json-panel">
                 <section className="preview-card">{preview}</section>
               </div>
             </>
           ) : (
-            <>
-              <section className="page-heading">
-                <div>
-                  <div className="eyebrow">
-                    <span /> WORKSPACE
-                  </div>
-                  <h1>{t('settings')}</h1>
-                  <p>{t('settingsText')}</p>
-                </div>
-              </section>
-              <div className="settings-grid">
-                <section className="settings-card">
-                  <h2>
-                    <Globe2 size={19} />
-                    {t('interface')}
-                  </h2>
-                  <label>
-                    {t('interface')}
-                    <select
-                      value={locale}
-                      onChange={(event) => setLocale(event.target.value as Locale)}
-                    >
-                      {languages.slice(0, 3).map((lang) => (
-                        <option key={lang.code} value={lang.code}>
-                          {lang.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    {t('appearance')}
-                    <div className="theme-options">
-                      <button
-                        className={theme === 'light' ? 'button selected' : 'button'}
-                        onClick={() => setTheme('light')}
-                      >
-                        <Sun size={17} />
-                        {t('light')}
-                      </button>
-                      <button
-                        className={theme === 'dark' ? 'button selected' : 'button'}
-                        onClick={() => setTheme('dark')}
-                      >
-                        <Moon size={17} />
-                        {t('dark')}
-                      </button>
-                    </div>
-                  </label>
-                  <p className="help-text">{t('sessionHelp')}</p>
-                </section>
-                <section className="settings-card">
-                  <div className="section-heading">
-                    <h2>
-                      <Sparkles size={19} />
-                      {t('ai')}
-                    </h2>
-                    <input
-                      type="checkbox"
-                      aria-label={t('ai')}
-                      checked={ai}
-                      onChange={(event) => setAi(event.target.checked)}
-                    />
-                  </div>
-                  <p>{t('aiHelp')}</p>
-                  <label>
-                    {t('provider')}
-                    <select
-                      value={provider}
-                      onChange={(event) => {
-                        const next = event.target.value as Provider;
-                        setAiSettings({ provider: next, model: providers[next].model, apikey: '' });
-                      }}
-                    >
-                      {Object.entries(providers).map(([id, item]) => (
-                        <option key={id} value={id}>
-                          {item.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    {t('model')}
-                    <input
-                      value={model}
-                      maxLength={120}
-                      onChange={(event) =>
-                        setAiSettings((previous) => ({ ...previous, model: event.target.value }))
-                      }
-                    />
-                  </label>
-                  <label>
-                    {t('apiKey')}
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      spellCheck={false}
-                      value={apikey}
-                      maxLength={4096}
-                      placeholder={t('apiPlaceholder')}
-                      onChange={(event) =>
-                        setAiSettings((previous) => ({ ...previous, apikey: event.target.value }))
-                      }
-                    />
-                  </label>
-                </section>
-              </div>
-            </>
+            <SettingsPanel
+              t={t}
+              locale={locale}
+              setLocale={setLocale}
+              theme={theme}
+              setTheme={setTheme}
+              ai={ai}
+              setAi={setAi}
+              provider={provider}
+              setAiSettings={setAiSettings}
+              model={model}
+              apikey={apikey}
+            />
           )}
         </div>
       </main>
       {modal === 'import' && (
-        <Modal title={t('importTitle')} closeLabel={t('close')} onClose={() => setModal(null)}>
-          <p>{t('importText')}</p>
-          <label>
-            {t('importLanguage')}
-            <select value={importLang} onChange={(event) => setImportLang(event.target.value)}>
-              {languages.map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="file-picker">
-            <Upload size={22} />
-            {t('file')}
-            <input
-              type="file"
-              accept=".json,application/json"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                if (file.size > 2 * 1024 * 1024) {
-                  setImportText('');
-                  setImportError(t('fileSize'));
-                  return;
-                }
-                void file
-                  .text()
-                  .then((text) => {
-                    setImportText(text);
-                    setImportError('');
-                  })
-                  .catch(() => setImportError(t('importError')));
-              }}
-            />
-          </label>
-          <label>
-            {t('paste')}
-            <textarea
-              className="import-text"
-              value={importText}
-              onChange={(event) => {
-                setImportText(event.target.value);
-                setImportError('');
-              }}
-              placeholder={'{ "example": "Exemplo" }'}
-            />
-          </label>
-          <label>
-            {t('conflictMode')}
-            <select
-              value={overwrite ? 'overwrite' : 'keep'}
-              onChange={(event) => setOverwrite(event.target.value === 'overwrite')}
-            >
-              <option value="keep">{t('keep')}</option>
-              <option value="overwrite">{t('overwrite')}</option>
-            </select>
-          </label>
-          {importError && (
-            <p className="inline-error" role="alert">
-              {importError}
-            </p>
-          )}
-          <div className="modal-actions">
-            <button className="button" onClick={() => setModal(null)}>
-              {t('cancel')}
-            </button>
-            <button className="button primary" disabled={!importText.trim()} onClick={importJson}>
-              <Upload size={15} />
-              {t('merge')}
-            </button>
-          </div>
-        </Modal>
+        <ImportDialog
+          t={t}
+          setModal={setModal}
+          importLang={importLang}
+          setImportLang={setImportLang}
+          setImportText={setImportText}
+          setImportError={setImportError}
+          importText={importText}
+          overwrite={overwrite}
+          setOverwrite={setOverwrite}
+          importError={importError}
+          importJson={importJson}
+        />
       )}
       {modal === 'export' && (
         <Modal title={t('export')} closeLabel={t('close')} onClose={() => setModal(null)}>
