@@ -26,7 +26,7 @@ test('per-key nesting toggles literal dots and survives reload', async ({ page }
     .toEqual({ 'x.y': 'literal', parent: { child: 'nested' } });
 });
 
-test('accept all applies valid suggestions across languages without overwriting edits', async ({
+test('accept all affects only the selected language and preserves other suggestions', async ({
   page,
 }) => {
   await page.goto('/');
@@ -44,16 +44,23 @@ test('accept all applies valid suggestions across languages without overwriting 
     });
   });
   await page.getByRole('button', { name: 'Sugerir pendentes', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Aceitar todas (4)', exact: true })).toBeEnabled();
-  await page.getByRole('textbox', { name: 'Português: title', exact: true }).fill('Alterado');
   await page.getByRole('tab', { name: /English/ }).click();
+  await expect(page.getByRole('button', { name: 'Aceitar todas (2)', exact: true })).toBeEnabled();
   await page.getByRole('textbox', { name: 'English: hello', exact: true }).fill('Manual');
   await page.getByRole('button', { name: 'Aceitar todas (1)', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'English: hello', exact: true })).toHaveValue(
     'Manual',
   );
-  await expect(page.getByRole('textbox', { name: 'English: title', exact: true })).toHaveValue('');
+  await expect(page.getByRole('textbox', { name: 'English: title', exact: true })).toHaveValue(
+    'Hello',
+  );
   await page.getByRole('tab', { name: /Español/ }).click();
+  await expect(page.getByRole('textbox', { name: 'Español: hello', exact: true })).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Aceitar todas (2)', exact: true })).toBeEnabled();
+  await page.getByRole('tab', { name: /Português/ }).click();
+  await page.getByRole('textbox', { name: 'Português: title', exact: true }).fill('Alterado');
+  await page.getByRole('tab', { name: /Español/ }).click();
+  await page.getByRole('button', { name: 'Aceitar todas (1)', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Español: hello', exact: true })).toHaveValue(
     'Hola',
   );

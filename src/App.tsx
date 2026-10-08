@@ -159,22 +159,27 @@ export default function App() {
       : undefined;
   };
   const targets = selected.filter((code) => code !== base);
+  const active = selected.includes(activeLang) ? activeLang : base;
   const suggestionCount = entries.reduce(
-    (count, entry) => count + selected.filter((code) => validSuggestion(entry, code)).length,
+    (count, entry) => count + (validSuggestion(entry, active) ? 1 : 0),
     0,
   );
   const acceptAllSuggestions = () => {
     setEntries((previous) =>
       previous.map((entry) => {
-        const values = { ...entry.values };
-        for (const code of selected) {
-          const item = validSuggestion(entry, code);
-          if (item) values[code] = item.text;
-        }
-        return { ...entry, values };
+        const item = validSuggestion(entry, active);
+        return item ? { ...entry, values: { ...entry.values, [active]: item.text } } : entry;
       }),
     );
-    setSuggestions({});
+    setSuggestions((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).map(([id, suggestionsByLanguage]) => {
+          const remaining = { ...suggestionsByLanguage };
+          delete remaining[active];
+          return [id, remaining];
+        }),
+      ),
+    );
   };
   const pendingSources = entries.filter(
     (entry) =>
@@ -194,7 +199,6 @@ export default function App() {
       ),
     [keyed, selected, errors, entries],
   );
-  const active = selected.includes(activeLang) ? activeLang : base;
   const effectivePreviewLang =
     modal === 'export' && selected.includes(previewLang) ? previewLang : active;
   const visible = entries.filter((entry) => {
