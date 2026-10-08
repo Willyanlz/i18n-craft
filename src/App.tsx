@@ -59,9 +59,7 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [previewLang, setPreviewLang] = useState(savedProject.selected[0]);
-  const [previewPinned, setPreviewPinned] = useState(false);
   const [previewMode, setPreviewMode] = useState<'json' | 'tree'>('json');
-  const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [modal, setModal] = useState<ModalName>(null);
   const [importLang, setImportLang] = useState('pt');
   const [importText, setImportText] = useState('');
@@ -172,6 +170,7 @@ export default function App() {
     [keyed, selected, errors, entries],
   );
   const active = selected.includes(activeLang) ? activeLang : base;
+  const effectivePreviewLang = active;
   const visible = entries.filter((entry) => {
     const matches = `${entry.key} ${Object.values(entry.values).join(' ')}`
       .toLocaleLowerCase()
@@ -184,8 +183,8 @@ export default function App() {
     );
   });
   const json = useMemo(
-    () => (errors.size ? '' : buildJson(entries, previewLang)),
-    [entries, previewLang, errors],
+    () => (errors.size ? '' : buildJson(entries, effectivePreviewLang)),
+    [entries, effectivePreviewLang, errors],
   );
   const updateEntry = (id: string, change: Partial<Entry>) =>
     setEntries((previous) =>
@@ -422,9 +421,8 @@ export default function App() {
       previewMode={previewMode}
       setPreviewMode={setPreviewMode}
       t={t}
-      previewLang={previewLang}
+      previewLang={effectivePreviewLang}
       setPreviewLang={setPreviewLang}
-      selected={selected}
       errors={errors}
       json={json}
       copyJson={copyJson}

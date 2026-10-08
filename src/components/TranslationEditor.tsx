@@ -1,6 +1,16 @@
 import type { Dispatch, SetStateAction } from 'react';
-import { Check, Globe2, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
-import { type KeyboardEvent } from 'react';
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Globe2,
+  Plus,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { type KeyboardEvent, useState } from 'react';
 import { langName, languages, tokensMatch, type Entry } from '../core';
 import { flagFor } from '../flags';
 import { type Locale, type MessageKey } from '../i18n';
@@ -65,6 +75,7 @@ export function TranslationEditor({
   entries,
   addEntry,
 }: Props) {
+  const [valuesCollapsed, setValuesCollapsed] = useState(false);
   return (
     <section className="editor-card">
       <div className="language-toolbar">
@@ -165,15 +176,29 @@ export function TranslationEditor({
                 {t('key')}
                 <span className="muted"> / path</span>
               </th>
-              <th>
-                {langName(active)} {active === base && <small>{t('baseLabel')}</small>}
+              <th className="value-head">
+                <span className="value-header">
+                  <span>
+                    {langName(active)} {active === base && <small>{t('baseLabel')}</small>}
+                  </span>
+                </span>
               </th>
-              <th>
+              <th className="right-column">
                 <span className="sr-only">{t('remove')}</span>
+                <button
+                    className="icon-button value-collapse"
+                    aria-expanded={!valuesCollapsed}
+                    aria-label={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
+                    title={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
+                    onClick={() => setValuesCollapsed((was) => !was)}
+                  >
+                    {valuesCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                    <span>{t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}</span>
+                </button>
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody hidden={valuesCollapsed}>
             {visible.map((entry, index) => {
               const item = validSuggestion(entry, active);
               const missing = !entry.values[active]?.trim();
@@ -203,25 +228,33 @@ export function TranslationEditor({
                     )}
                   </td>
                   <td className="value-cell">
-                    <textarea
-                      id={`value-${entry.id}-${active}`}
-                      rows={2}
-                      className={missing ? 'value-missing' : undefined}
-                      aria-invalid={missing || undefined}
-                      aria-describedby={missing ? missingId : undefined}
-                      aria-label={`${langName(active)}: ${entry.key || index + 1}`}
-                      placeholder={t('fillMissing')}
-                      value={entry.values[active] || ''}
-                      onChange={(event) => setValue(entry, active, event.target.value)}
-                      onKeyDown={(event) => onCellKey(event, index === visible.length - 1)}
-                    />
-                    {baseText ? (
-                      <span className="base-reference">
-                        <img className="lang-flag" src={flagFor(base)} alt="" aria-hidden="true" />
-                        <span className="sr-only">{`${langName(base)}: `}</span>
-                        <span className="base-reference-text">{baseText}</span>
+                    {valuesCollapsed ? (
+                      <span className="value-collapsed">
+                        {entry.values[active]?.trim() || t('fillMissing')}
                       </span>
-                    ) : null}
+                    ) : (
+                      <>
+                        <textarea
+                          id={`value-${entry.id}-${active}`}
+                          rows={2}
+                          className={missing ? 'value-missing' : undefined}
+                          aria-invalid={missing || undefined}
+                          aria-describedby={missing ? missingId : undefined}
+                          aria-label={`${langName(active)}: ${entry.key || index + 1}`}
+                          placeholder={t('fillMissing')}
+                          value={entry.values[active] || ''}
+                          onChange={(event) => setValue(entry, active, event.target.value)}
+                          onKeyDown={(event) => onCellKey(event, index === visible.length - 1)}
+                        />
+                        {baseText ? (
+                          <span className="base-reference">
+                            <img className="lang-flag" src={flagFor(base)} alt="" aria-hidden="true" />
+                            <span className="sr-only">{`${langName(base)}: `}</span>
+                            <span className="base-reference-text">{baseText}</span>
+                          </span>
+                        ) : null}
+                      </>
+                    )}
                     {missing && (
                       <span id={missingId} className="sr-only">
                         {t('valueMissing')}
@@ -270,6 +303,11 @@ export function TranslationEditor({
           </tbody>
         </table>
       </div>
+      {valuesCollapsed && entries.length > 0 && (
+        <p className="values-collapsed-note">
+          {visible.length} {t('keys')} · {t('valuesExpand')}
+        </p>
+      )}
       {!entries.length ? (
         <div className="empty-state">
           <div className="empty-art">

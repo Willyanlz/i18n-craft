@@ -9,7 +9,6 @@ type Props = {
   t: Translate;
   previewLang: string;
   setPreviewLang: Dispatch<SetStateAction<string>>;
-  selected: string[];
   errors: Map<string, string>;
   json: string;
   copyJson: () => Promise<void>;
@@ -20,8 +19,6 @@ export function JsonPreview({
   setPreviewMode,
   t,
   previewLang,
-  setPreviewLang,
-  selected,
   errors,
   json,
   copyJson,
@@ -46,17 +43,6 @@ export function JsonPreview({
             {t('tree')}
           </button>
         </div>
-        <select
-          aria-label={t('preview')}
-          value={previewLang}
-          onChange={(event) => setPreviewLang(event.target.value)}
-        >
-          {selected.map((code) => (
-            <option key={code} value={code}>
-              {code}.json
-            </option>
-          ))}
-        </select>
       </div>
       {errors.size ? (
         <p className="inline-error">{t('invalidExport')}</p>

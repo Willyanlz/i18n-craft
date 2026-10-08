@@ -16,7 +16,7 @@ Real screenshots of the application with a sample appointment interface. The AI 
 
 ### Find missing translations
 
-Switch language tabs to edit shared keys, compare each translation with the English source, and identify empty fields. The JSON preview reflects the selected export language.
+Switch language tabs to edit shared keys, compare each translation with the English source, and identify empty fields. The table header lets you collapse the values column, and the JSON preview has its own language selector.
 
 ![Dark editor showing Spanish translations, missing values, English source text, and nested JSON](docs/screenshots/dark-editor.png)
 
