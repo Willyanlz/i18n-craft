@@ -3,6 +3,12 @@ import type { Entry } from './core';
 export type ValueType = 'string' | 'number' | 'boolean' | 'null' | 'json';
 type Path = (string | number)[];
 
+// Maximum leaf fields accepted per imported JSON document. Large real-world
+// files (e.g. ~4300 leaves) must import without jank; the editor UI handles
+// scale via pagination + debounced preview, so this guard only rejects
+// pathological inputs.
+export const MAX_FIELDS = 15000;
+
 // Bracket notation distinguishes literal dots from nested paths and array indexes.
 function formatPath(path: Path): string {
   return path
@@ -152,7 +158,7 @@ function flatten(value: unknown): { key: string; text: string; type: ValueType }
       text: type === 'string' ? (child as string) : JSON.stringify(child),
       type,
     });
-    if (output.length > 5000) throw new Error('limit');
+    if (output.length > MAX_FIELDS) throw new Error('limit');
   }
   visit(value, []);
   if (!output.length && Array.isArray(value)) throw new Error('shape');
@@ -186,7 +192,7 @@ export function mergeJson(
       if (type !== 'string' || entry.types) entry.types = { ...entry.types, [lang]: type };
     }
   }
-  if (merged.length > 5000) throw new Error('limit');
+  if (merged.length > MAX_FIELDS) throw new Error('limit');
   if (validateKeys(merged).size) throw new Error('conflict');
   return merged;
 }

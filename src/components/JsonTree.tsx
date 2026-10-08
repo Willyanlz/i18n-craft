@@ -6,7 +6,7 @@ export function JsonTree({ value }: { value: Record<string, unknown> }) {
       {Object.entries(value).map(([key, child]) => (
         <li key={key}>
           {typeof child === 'object' && child !== null ? (
-            <details open>
+            <details>
               <summary>
                 <Braces size={14} />
                 {key}

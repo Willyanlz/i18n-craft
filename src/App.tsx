@@ -1,6 +1,6 @@
 import { strToU8, zipSync } from 'fflate';
 import { Braces, Download, FileJson, Globe2, Sparkles, Trash2, Upload, X } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { AI_SETTINGS_KEY, readAiSettings } from './ai-settings';
 import { ImportDialog } from './components/ImportDialog';
 import { JsonPreview } from './components/JsonPreview';
@@ -29,6 +29,7 @@ import {
   saveSelectedLangs,
 } from './project-session';
 import type { ModalName, Suggestions } from './types';
+import { useDebouncedValue } from './use-debounced-value';
 
 const LOCALE_KEY = 'i18ncraft.locale';
 const readLocale = (): Locale => {
@@ -40,6 +41,16 @@ const readLocale = (): Locale => {
   }
 };
 const THEME_KEY = 'i18ncraft.theme';
+const PAGE_SIZE_KEY = 'i18ncraft.page-size';
+type PageSize = 20 | 50 | 100;
+const readPageSize = (): PageSize => {
+  try {
+    const value = Number(localStorage.getItem(PAGE_SIZE_KEY));
+    return value === 20 || value === 100 ? value : 50;
+  } catch {
+    return 50;
+  }
+};
 const readTheme = (): 'light' | 'dark' => {
   try {
     return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
@@ -65,6 +76,11 @@ export default function App() {
   );
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
+  // Pagination: slices the filtered list so the DOM never holds thousands of
+  // rows at once. Small projects (visible <= pageSize) render exactly as
+  // before — controls stay hidden and numbering/Tab order are unchanged.
+  const [tablePage, setTablePage] = useState(0);
+  const [pageSize, setPageSize] = useState<PageSize>(readPageSize);
   const [previewLang, setPreviewLang] = useState(savedProject.selected[0]);
   const [previewMode, setPreviewMode] = useState<'json' | 'tree'>('json');
   const [modal, setModal] = useState<ModalName>(null);
@@ -84,6 +100,9 @@ export default function App() {
   const currentRef = useRef({ base, selected });
   currentRef.current = { base, selected };
   const focusTarget = useRef<string | null>(null);
+  // Guards the debounced saver: clearing bumps the epoch so a stale timer
+  // never resurrects entries that were just wiped.
+  const saveEpoch = useRef(0);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -93,14 +112,33 @@ export default function App() {
       /* Theme still applies without storage. */
     }
   }, [theme]);
-  useEffect(() => {
+  const flushSession = useCallback(() => {
     try {
-      saveProjectSession({ entries, selected });
-      saveSelectedLangs(selected);
+      saveProjectSession({ entries: entriesRef.current, selected: currentRef.current.selected });
+      saveSelectedLangs(currentRef.current.selected);
     } catch {
       setNotice(messages[locale].sessionSaveError);
     }
-  }, [entries, selected, locale]);
+  }, [locale]);
+  useEffect(() => {
+    // Debounced save: typing stays instant, sessionStorage writes (which can
+    // exceed 1MB on large projects) happen 500ms after the last keystroke.
+    // flushSession covers unload + destructive actions so no work is lost.
+    const epoch = saveEpoch.current;
+    const timer = setTimeout(() => {
+      if (saveEpoch.current === epoch) flushSession();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [entries, selected, flushSession]);
+  useEffect(() => {
+    const flush = () => flushSession();
+    window.addEventListener('beforeunload', flush);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      window.removeEventListener('beforeunload', flush);
+      window.removeEventListener('pagehide', flush);
+    };
+  }, [flushSession]);
   useEffect(() => {
     document.documentElement.lang = locale === 'pt' ? 'pt-BR' : locale;
     try {
@@ -140,10 +178,14 @@ export default function App() {
   }, [aiSettings, locale]);
 
   const errors = useMemo(() => validateKeys(entries), [entries]);
-  const keyed = entries.filter((e) => e.key.trim());
-  const filled = keyed.reduce(
-    (sum, e) => sum + selected.filter((code) => e.values[code]?.trim()).length,
-    0,
+  // Memoized derivations: without this, every keystroke re-runs filter +
+  // join(' ') over thousands of entries. keyed is stable so pendingByLang
+  // no longer recomputes on every render.
+  const keyed = useMemo(() => entries.filter((e) => e.key.trim()), [entries]);
+  const filled = useMemo(
+    () =>
+      keyed.reduce((sum, e) => sum + selected.filter((code) => e.values[code]?.trim()).length, 0),
+    [keyed, selected],
   );
   const total = keyed.length * selected.length;
   const progress = total ? Math.round((filled / total) * 100) : 0;
@@ -181,13 +223,19 @@ export default function App() {
       ),
     );
   };
-  const pendingSources = entries.filter(
-    (entry) =>
-      entry.key.trim() &&
-      !errors.has(entry.id) &&
-      valueType(entry, base) === 'string' &&
-      entry.values[base]?.trim() &&
-      targets.some((code) => !entry.values[code]?.trim() && !validSuggestion(entry, code)),
+  const pendingSources = useMemo(
+    () =>
+      entries.filter(
+        (entry) =>
+          entry.key.trim() &&
+          !errors.has(entry.id) &&
+          valueType(entry, base) === 'string' &&
+          entry.values[base]?.trim() &&
+          targets.some((code) => !entry.values[code]?.trim() && !validSuggestion(entry, code)),
+      ),
+    // validSuggestion closes over suggestions/ai/base; recompute when they change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entries, errors, base, targets, suggestions, ai],
   );
   const pendingByLang = useMemo(
     () =>
@@ -197,24 +245,53 @@ export default function App() {
           keyed.filter((entry) => !errors.has(entry.id) && !entry.values[code]?.trim()).length,
         ]),
       ),
-    [keyed, selected, errors, entries],
+    [keyed, selected, errors],
   );
   const effectivePreviewLang =
     modal === 'export' && selected.includes(previewLang) ? previewLang : active;
-  const visible = entries.filter((entry) => {
-    const matches = `${entry.key} ${Object.values(entry.values).join(' ')}`
-      .toLocaleLowerCase()
-      .includes(query.toLocaleLowerCase());
-    return (
-      matches &&
-      (filter === 'all' ||
-        (filter === 'missing' && !entry.values[active]?.trim()) ||
-        (filter === 'suggestions' && validSuggestion(entry, active) !== undefined))
-    );
-  });
+  const loweredQuery = query.toLocaleLowerCase();
+  const visible = useMemo(
+    () =>
+      entries.filter((entry) => {
+        const matches = `${entry.key} ${Object.values(entry.values).join(' ')}`
+          .toLocaleLowerCase()
+          .includes(loweredQuery);
+        return (
+          matches &&
+          (filter === 'all' ||
+            (filter === 'missing' && !entry.values[active]?.trim()) ||
+            (filter === 'suggestions' && validSuggestion(entry, active) !== undefined))
+        );
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [entries, loweredQuery, filter, active, suggestions, ai],
+  );
+  const pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
+  const safeTablePage = Math.min(tablePage, pageCount - 1);
+  const paged = useMemo(
+    () => visible.slice(safeTablePage * pageSize, safeTablePage * pageSize + pageSize),
+    [visible, safeTablePage, pageSize],
+  );
+  const pickPageSize = (size: PageSize) => {
+    setPageSize(size);
+    setTablePage(0);
+    try {
+      localStorage.setItem(PAGE_SIZE_KEY, String(size));
+    } catch {
+      /* Page size still applies without storage. */
+    }
+  };
+  // Debounced preview: inputs update instantly from `entries`, while the
+  // expensive buildJson (~200KB stringify on large projects) runs 400ms
+  // after typing stops. Small projects (<500 keys) stay effectively instant.
+  const previewEntries = useDebouncedValue(entries, 400);
   const json = useMemo(
     () => (errors.size ? '' : buildJson(entries, effectivePreviewLang)),
     [entries, effectivePreviewLang, errors],
+  );
+  const previewJson = useMemo(
+    () => (errors.size ? '' : buildJson(previewEntries, effectivePreviewLang)),
+    [previewEntries, effectivePreviewLang, errors],
   );
   const updateEntry = (id: string, change: Partial<Entry>) =>
     setEntries((previous) =>
@@ -228,7 +305,13 @@ export default function App() {
     setQuery('');
     setFilter('all');
     setPage('editor');
-    setEntries((previous) => [...previous, entry]);
+    setEntries((previous) => {
+      const next = [...previous, entry];
+      // Jump to the page holding the new row so small-project UX is
+      // identical and large-project users see the focused input at once.
+      setTablePage(Math.floor(next.length / pageSize));
+      return next;
+    });
   };
   const onCellKey = (
     event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -240,14 +323,23 @@ export default function App() {
       return;
     }
     if (event.key === 'Tab') {
-      const cells = visible.flatMap((entry) => [`key-${entry.id}`, `value-${entry.id}-${active}`]);
+      const cells = paged.flatMap((entry) => [`key-${entry.id}`, `value-${entry.id}-${active}`]);
       const next = cells.indexOf(event.currentTarget.id) + (event.shiftKey ? -1 : 1);
       if (next >= 0 && next < cells.length) {
         event.preventDefault();
         document.getElementById(cells[next])?.focus();
       } else if (!event.shiftKey) {
-        event.preventDefault();
-        addEntry();
+        if (safeTablePage < pageCount - 1) {
+          // Advance to the next page instead of trapping focus, then focus
+          // its first input once the slice renders.
+          event.preventDefault();
+          const first = visible[(safeTablePage + 1) * pageSize];
+          if (first) focusTarget.current = `key-${first.id}`;
+          setTablePage(safeTablePage + 1);
+        } else {
+          event.preventDefault();
+          addEntry();
+        }
       }
     }
   };
@@ -301,6 +393,7 @@ export default function App() {
       if (!selected.includes(importLang)) setSelected((previous) => [...previous, importLang]);
       setQuery('');
       setFilter('all');
+      setTablePage(0);
       setModal(null);
       setImportText('');
       setNotice(t('importSuccess'));
@@ -447,6 +540,7 @@ export default function App() {
       if (active !== code) setActiveLang(code);
       setQuery('');
       setFilter('all');
+      setTablePage(0);
       focusTarget.current = `value-${entry.id}-${code}`;
     }
   };
@@ -460,7 +554,10 @@ export default function App() {
       setPreviewLang={setPreviewLang}
       languages={modal === 'export' ? selected : undefined}
       errors={errors}
-      json={json}
+      // Lazy preview: the editor panel uses the debounced JSON so typing
+      // never blocks on a ~200KB stringify; export actions use the live
+      // `json` so copy/download are always exact.
+      json={modal === 'export' ? json : previewJson}
       copyJson={copyJson}
       download={download}
     />
@@ -584,6 +681,13 @@ export default function App() {
                 busy={busy}
                 suggest={suggest}
                 visible={visible}
+                paged={paged}
+                pageStart={safeTablePage * pageSize}
+                tablePage={safeTablePage}
+                pageCount={pageCount}
+                setTablePage={setTablePage}
+                pageSize={pageSize}
+                pickPageSize={pickPageSize}
                 validSuggestion={validSuggestion}
                 errors={errors}
                 updateEntry={updateEntry}
@@ -658,10 +762,20 @@ export default function App() {
               className="button danger"
               onClick={() => {
                 controller.current?.abort();
+                // Clear synchronously and invalidate pending debounce timers:
+                // the saver still holds previous entries, so wipe storage now
+                // and bump the epoch to avoid resurrecting the project.
+                saveEpoch.current += 1;
+                try {
+                  saveProjectSession({ entries: [], selected });
+                } catch {
+                  /* Clearing continues without storage. */
+                }
                 setEntries([]);
                 setSuggestions({});
                 setQuery('');
                 setFilter('all');
+                setTablePage(0);
                 setImportText('');
                 setModal(null);
               }}

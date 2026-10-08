@@ -1,5 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Braces, Clipboard, Code2, Download } from 'lucide-react';
+import { useMemo } from 'react';
 import type { Translate } from '../types';
 import { langName } from '../core';
 
@@ -28,6 +29,16 @@ export function JsonPreview({
   copyJson,
   download,
 }: Props) {
+  // Memoized tree parse: collapsed <details> nodes already cut DOM cost, and
+  // this avoids re-parsing a ~200KB string on every keystroke.
+  const treeValue = useMemo<Record<string, unknown> | null>(() => {
+    if (errors.size || previewMode !== 'tree') return null;
+    try {
+      return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }, [json, errors.size, previewMode]);
   return (
     <>
       <div className="preview-tabs">
@@ -67,9 +78,13 @@ export function JsonPreview({
         <pre className="code-preview">
           <code>{json}</code>
         </pre>
+      ) : treeValue ? (
+        <div className="tree-container">
+          <JsonTree value={treeValue} />
+        </div>
       ) : (
         <div className="tree-container">
-          <JsonTree value={JSON.parse(json)} />
+          <JsonTree value={{}} />
         </div>
       )}
       <div className="preview-footer">

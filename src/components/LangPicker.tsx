@@ -4,14 +4,25 @@ import { langName } from '../core';
 import { flagFor } from '../flags';
 import { translatedLangName, type Locale } from '../i18n';
 
-function LangLabel({ locale, code, muted = false }: { locale: Locale; code: string; muted?: boolean }) {
+function LangLabel({
+  locale,
+  code,
+  muted = false,
+}: {
+  locale: Locale;
+  code: string;
+  muted?: boolean;
+}) {
   const native = langName(code);
   const translated = translatedLangName(locale, code);
   return (
     <span className="lang-label">
       <span>{native}</span>
       {translated && translated !== native && (
-        <span className={muted ? 'lang-label-muted' : 'lang-label-translated'}> · {translated}</span>
+        <span className={muted ? 'lang-label-muted' : 'lang-label-translated'}>
+          {' '}
+          · {translated}
+        </span>
       )}
     </span>
   );

@@ -16,7 +16,14 @@ export const languages = [
   { code: 'sv', name: 'Svenska', short: 'SV' },
 ];
 import type { ValueType } from './json-format';
-export { buildJson, flattenJson, mergeJson, validateKeys, valueType } from './json-format';
+export {
+  MAX_FIELDS,
+  buildJson,
+  flattenJson,
+  mergeJson,
+  validateKeys,
+  valueType,
+} from './json-format';
 export type Entry = {
   id: string;
   key: string;

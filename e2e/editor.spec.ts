@@ -194,6 +194,38 @@ test('keyboard editing builds nested JSON and creates rows', async ({ page }) =>
   await expect(page.getByRole('textbox', { name: 'CHAVE 3', exact: true })).toBeFocused();
 });
 
+test('pagination keeps editing and focus across pages', async ({ page }) => {
+  await page.goto('/');
+  await importJson(
+    page,
+    JSON.stringify(
+      Object.fromEntries(Array.from({ length: 60 }, (_, index) => ['key' + index, 'Valor'])),
+    ),
+  );
+  // Default page size (50): controls appear top and bottom, page 1 holds CHAVE 1..50.
+  await expect(page.getByRole('button', { name: 'Próxima', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Anterior', exact: true })).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Próxima', exact: true }).first()).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Anterior', exact: true }).first()).toBeDisabled();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 50', exact: true })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 51', exact: true })).toHaveCount(0);
+  // Switch to 20 per page (both selects stay in sync): CHAVE 21 moves to page 2.
+  await page.getByLabel('por página', { exact: true }).first().selectOption('20');
+  await expect(page.getByLabel('por página', { exact: true }).nth(1)).toHaveValue('20');
+  await expect(page.getByRole('textbox', { name: 'CHAVE 21', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Próxima', exact: true }).first().click();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 21', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'CHAVE 21', exact: true }).fill('key20renamed');
+  // Top and bottom bars navigate the same state: bottom Próxima jumps pages.
+  await page.getByRole('button', { name: 'Próxima', exact: true }).nth(1).click();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 41', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Anterior', exact: true }).first().click();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 21', exact: true })).toBeVisible();
+  await page.getByRole('textbox', { name: 'Buscar chave ou tradução…', exact: true }).fill('key20');
+  await expect(page.getByRole('textbox', { name: 'CHAVE 1', exact: true })).toBeVisible();
+});
+
 test('import, filters, download and conflicts preserve translations', async ({ page }) => {
   await page.goto('/');
   await importJson(page, '{"automation":{"example":"Exemplo"},"title":"Título"}');
@@ -386,7 +418,13 @@ test('global suggestions process more than one hundred keys', async ({ page }) =
   });
   await page.getByRole('button', { name: 'Sugerir pendentes', exact: true }).click();
   await page.getByRole('tab', { name: /English/ }).click();
-  await expect(page.getByRole('button', { name: 'Aceitar', exact: true })).toHaveCount(101);
+  // Pagination renders 50 rows per page: first page holds 50 accept buttons,
+  // second page holds 50, third page holds 1.
+  await expect(page.getByRole('button', { name: 'Aceitar', exact: true })).toHaveCount(50);
+  await page.getByRole('button', { name: 'Próxima', exact: true }).first().click();
+  await expect(page.getByRole('button', { name: 'Aceitar', exact: true })).toHaveCount(50);
+  await page.getByRole('button', { name: 'Próxima', exact: true }).first().click();
+  await expect(page.getByRole('button', { name: 'Aceitar', exact: true })).toHaveCount(1);
   expect(sizes).toEqual([100, 1]);
 });
 

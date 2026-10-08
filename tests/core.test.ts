@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildJson,
   flattenJson,
+  MAX_FIELDS,
   mergeJson,
   newEntry,
   parseJsonInput,
@@ -110,6 +111,20 @@ describe('JSON editing and merging', () => {
   });
   it('does not silently drop values entered without a key', () => {
     expect(() => buildJson([{ ...newEntry(), values: { pt: 'text' } }], 'pt')).toThrow();
+  });
+  it('supports large real-world files up to the field limit', () => {
+    expect(MAX_FIELDS).toBe(15000);
+    const large = Object.fromEntries(
+      Array.from({ length: 6000 }, (_, index) => [`key${index}`, `value ${index}`]),
+    );
+    const entries = mergeJson([], large, 'pt', false);
+    expect(entries.length).toBe(6000);
+    expect(JSON.parse(buildJson(entries, 'pt'))).toEqual(large);
+    const tooLarge = Object.fromEntries(
+      Array.from({ length: MAX_FIELDS + 1 }, (_, index) => [`key${index}`, 'x']),
+    );
+    expect(() => flattenJson(tooLarge)).toThrow('limit');
+    expect(() => mergeJson([], tooLarge, 'pt', false)).toThrow('limit');
   });
 });
 

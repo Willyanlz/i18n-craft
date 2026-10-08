@@ -18,6 +18,65 @@ import { type Locale, type MessageKey } from '../i18n';
 import type { Suggestion, Suggestions, Translate } from '../types';
 
 import { LangPicker } from './LangPicker';
+
+// Shared pagination controls rendered above and below the table so large
+// projects never require scrolling to the bottom to change pages. Purely
+// presentational: suggestion/AI logic operates on the full `visible` list,
+// never on the current slice.
+function PaginationBar({
+  t,
+  tablePage,
+  pageCount,
+  setTablePage,
+  visibleCount,
+  pageSize,
+  pickPageSize,
+  position,
+}: {
+  t: Translate;
+  tablePage: number;
+  pageCount: number;
+  setTablePage: Dispatch<SetStateAction<number>>;
+  visibleCount: number;
+  pageSize: 20 | 50 | 100;
+  pickPageSize: (size: 20 | 50 | 100) => void;
+  position: 'top' | 'bottom';
+}) {
+  return (
+    <div className={`pagination-bar pagination-${position}`}>
+      <button
+        className="button"
+        disabled={tablePage === 0}
+        onClick={() => setTablePage(tablePage - 1)}
+      >
+        {t('prevPage')}
+      </button>
+      <span>
+        {t('page')} {tablePage + 1} {t('of')} {pageCount} · {visibleCount} {t('keys')}
+      </span>
+      <button
+        className="button"
+        disabled={tablePage >= pageCount - 1}
+        onClick={() => setTablePage(tablePage + 1)}
+      >
+        {t('nextPage')}
+      </button>
+      <label>
+        <select
+          aria-label={t('perPage')}
+          value={pageSize}
+          onChange={(event) => pickPageSize(Number(event.target.value) as 20 | 50 | 100)}
+        >
+          {([20, 50, 100] as const).map((size) => (
+            <option key={size} value={size}>
+              {size} {t('perPage')}
+            </option>
+          ))}
+        </select>
+      </label>
+    </div>
+  );
+}
 type Props = {
   t: Translate;
   selected: string[];
@@ -36,6 +95,13 @@ type Props = {
   busy: boolean;
   suggest: () => Promise<void>;
   visible: Entry[];
+  paged: Entry[];
+  pageStart: number;
+  tablePage: number;
+  pageCount: number;
+  setTablePage: Dispatch<SetStateAction<number>>;
+  pageSize: 20 | 50 | 100;
+  pickPageSize: (size: 20 | 50 | 100) => void;
   validSuggestion: (entry: Entry, code: string) => Suggestion | undefined;
   errors: Map<string, string>;
   updateEntry: (id: string, change: Partial<Entry>) => void;
@@ -67,6 +133,13 @@ export function TranslationEditor({
   busy,
   suggest,
   visible,
+  paged,
+  pageStart,
+  tablePage,
+  pageCount,
+  setTablePage,
+  pageSize,
+  pickPageSize,
   validSuggestion,
   errors,
   updateEntry,
@@ -97,7 +170,10 @@ export function TranslationEditor({
                   role="tab"
                   aria-selected={isActive}
                   className="language-tab-button"
-                  onClick={() => setActiveLang(code)}
+                  onClick={() => {
+                    setActiveLang(code);
+                    setTablePage(0);
+                  }}
                   title={`${langName(code)}${pending ? ` · ${pending} ${t('pending')}` : ''}`}
                 >
                   <img className="lang-flag" src={flagFor(code)} alt="" aria-hidden="true" />
@@ -146,13 +222,19 @@ export function TranslationEditor({
             aria-label={t('search')}
             placeholder={t('search')}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setTablePage(0);
+            }}
           />
         </label>
         <select
           aria-label={t('all')}
           value={filter}
-          onChange={(event) => setFilter(event.target.value)}
+          onChange={(event) => {
+            setFilter(event.target.value);
+            setTablePage(0);
+          }}
         >
           {(['all', 'missing', 'suggestions'] as const).map((item) => (
             <option key={item} value={item}>
@@ -184,6 +266,18 @@ export function TranslationEditor({
         )}
       </div>
       <div className="table-scroll">
+        {entries.length > 0 && pageCount > 1 && (
+          <PaginationBar
+            t={t}
+            tablePage={tablePage}
+            pageCount={pageCount}
+            setTablePage={setTablePage}
+            visibleCount={visible.length}
+            pageSize={pageSize}
+            pickPageSize={pickPageSize}
+            position="top"
+          />
+        )}
         <table>
           <thead>
             <tr>
@@ -215,7 +309,7 @@ export function TranslationEditor({
             </tr>
           </thead>
           <tbody hidden={valuesCollapsed}>
-            {visible.map((entry, index) => {
+            {paged.map((entry, index) => {
               const item = validSuggestion(entry, active);
               const missing = !entry.values[active]?.trim();
               const missingId = `missing-${entry.id}-${active}`;
@@ -227,11 +321,11 @@ export function TranslationEditor({
                 !tokensMatch(entry.values[base], entry.values[active]);
               return (
                 <tr key={entry.id} className={errors.has(entry.id) ? 'invalid-row' : ''}>
-                  <td className="row-number">{String(index + 1).padStart(2, '0')}</td>
+                  <td className="row-number">{String(pageStart + index + 1).padStart(2, '0')}</td>
                   <td className="key-cell">
                     <input
                       id={`key-${entry.id}`}
-                      aria-label={`${t('key')} ${index + 1}`}
+                      aria-label={`${t('key')} ${pageStart + index + 1}`}
                       className="key-input"
                       value={keyLabel(entry)}
                       placeholder={t('keyPlaceholder')}
@@ -244,7 +338,7 @@ export function TranslationEditor({
                       <input
                         type="checkbox"
                         checked={isNestedKey(entry)}
-                        aria-label={`${t('nesting')} ${index + 1}`}
+                        aria-label={`${t('nesting')} ${pageStart + index + 1}`}
                         onChange={(event) =>
                           updateEntry(entry.id, editKey(keyLabel(entry), event.target.checked))
                         }
@@ -275,7 +369,7 @@ export function TranslationEditor({
                           placeholder={t('fillMissing')}
                           value={entry.values[active] || ''}
                           onChange={(event) => setValue(entry, active, event.target.value)}
-                          onKeyDown={(event) => onCellKey(event, index === visible.length - 1)}
+                          onKeyDown={(event) => onCellKey(event, index === paged.length - 1)}
                         />
                         {baseText ? (
                           <span className="base-reference">
@@ -366,6 +460,18 @@ export function TranslationEditor({
           <Plus size={17} />
           {t('addKey')}
         </button>
+      )}
+      {entries.length > 0 && pageCount > 1 && (
+        <PaginationBar
+          t={t}
+          tablePage={tablePage}
+          pageCount={pageCount}
+          setTablePage={setTablePage}
+          visibleCount={visible.length}
+          pageSize={pageSize}
+          pickPageSize={pickPageSize}
+          position="bottom"
+        />
       )}
       <div className="editor-footer">
         <span>
