@@ -59,7 +59,9 @@ export default function App() {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [previewLang, setPreviewLang] = useState(savedProject.selected[0]);
+  const [previewPinned, setPreviewPinned] = useState(false);
   const [previewMode, setPreviewMode] = useState<'json' | 'tree'>('json');
+  const [previewCollapsed, setPreviewCollapsed] = useState(false);
   const [modal, setModal] = useState<ModalName>(null);
   const [importLang, setImportLang] = useState('pt');
   const [importText, setImportText] = useState('');

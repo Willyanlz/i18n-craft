@@ -12,7 +12,7 @@ You can test the application in real-time by clicking the link below:
 
 ## Dark theme walkthrough
 
-Real screenshots of the application with a sample appointment interface. The AI responses shown below are simulated demo data; no real credentials or patient records were used.
+Real screenshots of the application with a sample appointment interface. The AI responses shown below are simulated demo data.
 
 ### Find missing translations
 
