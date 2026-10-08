@@ -2,6 +2,20 @@ import { Check, ChevronDown, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { langName } from '../core';
 import { flagFor } from '../flags';
+import { translatedLangName, type Locale } from '../i18n';
+
+function LangLabel({ locale, code, muted = false }: { locale: Locale; code: string; muted?: boolean }) {
+  const native = langName(code);
+  const translated = translatedLangName(locale, code);
+  return (
+    <span className="lang-label">
+      <span>{native}</span>
+      {translated && translated !== native && (
+        <span className={muted ? 'lang-label-muted' : 'lang-label-translated'}> · {translated}</span>
+      )}
+    </span>
+  );
+}
 
 export function LangPicker({
   label,
@@ -10,6 +24,7 @@ export function LangPicker({
   onPick,
   disabled,
   add = false,
+  locale,
 }: {
   label: string;
   value: string;
@@ -17,6 +32,7 @@ export function LangPicker({
   onPick: (code: string) => void;
   disabled?: boolean;
   add?: boolean;
+  locale: Locale;
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -51,7 +67,7 @@ export function LangPicker({
           ) : (
             <img className="lang-flag" src={flagFor(value)} alt="" aria-hidden="true" />
           )}
-          <span>{add ? label : langName(value)}</span>
+          <span>{add ? label : <LangLabel locale={locale} code={value} muted />}</span>
         </>
         <ChevronDown size={14} />
       </button>
@@ -69,7 +85,7 @@ export function LangPicker({
                 }}
               >
                 <img className="lang-flag" src={flagFor(code)} alt="" aria-hidden="true" />
-                <span>{langName(code)}</span>
+                <LangLabel locale={locale} code={code} />
                 {code === value && <Check size={14} />}
               </button>
             </li>

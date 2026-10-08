@@ -192,6 +192,14 @@
   color: var(--text);
   padding: 8px 10px;
   white-space: nowrap;
+  max-width: 240px;
+  overflow: hidden;
+}
+.lang-picker-button > span:first-of-type {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .lang-picker-button:hover {
   border-color: var(--muted);
@@ -204,9 +212,12 @@
   z-index: 30;
   top: calc(100% + 6px);
   right: 0;
-  min-width: 190px;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(360px, calc(100vw - 32px));
   max-height: 260px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   margin: 0;
   padding: 5px;
   list-style: none;
@@ -214,6 +225,9 @@
   border: 1px solid var(--line);
   border-radius: 10px;
   box-shadow: var(--shadow);
+}
+.lang-picker-list .lang-flag {
+  flex-shrink: 0;
 }
 .lang-picker-list button {
   width: 100%;
@@ -223,6 +237,16 @@
   padding: 9px 10px;
   border-radius: 7px;
   color: var(--text);
+  min-width: 0;
+  white-space: nowrap;
+}
+.lang-picker-list button .lang-label {
+  flex: none;
+  min-width: 0;
+  text-align: left;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 .lang-picker-list button:hover {
   background: var(--soft);
@@ -230,9 +254,27 @@
 .lang-picker-list button.selected {
   background: var(--accent-soft);
 }
-.add-language-wrap .lang-picker-list {
-  left: 0;
-  right: auto;
+.lang-picker-list .lang-label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  min-width: 0;
+  flex: none;
+}
+.lang-label > span:first-child {
+  flex-shrink: 0;
+}
+.lang-label-translated {
+  color: var(--muted);
+  font-weight: 400;
+}
+.lang-label-muted {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 10px;
 }
 .base-reference .lang-flag {
   width: 18px;

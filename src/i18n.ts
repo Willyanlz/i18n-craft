@@ -335,3 +335,24 @@ export const messages = {
 };
 export type Locale = keyof typeof messages;
 export type MessageKey = keyof typeof messages.pt;
+
+const languageNames: Record<Locale, Record<string, string>> = {
+  pt: {
+    pt: 'Português', en: 'Inglês', es: 'Espanhol', fr: 'Francês', de: 'Alemão',
+    it: 'Italiano', ja: 'Japonês', nl: 'Holandês', pl: 'Polonês', ru: 'Russo',
+    zh: 'Chinês', ko: 'Coreano', ar: 'Árabe', hi: 'Híndi', sv: 'Sueco',
+  },
+  en: {
+    pt: 'Portuguese', en: 'English', es: 'Spanish', fr: 'French', de: 'German',
+    it: 'Italian', ja: 'Japanese', nl: 'Dutch', pl: 'Polish', ru: 'Russian',
+    zh: 'Chinese', ko: 'Korean', ar: 'Arabic', hi: 'Hindi', sv: 'Swedish',
+  },
+  es: {
+    pt: 'Portugués', en: 'Inglés', es: 'Español', fr: 'Francés', de: 'Alemán',
+    it: 'Italiano', ja: 'Japonés', nl: 'Neerlandés', pl: 'Polaco', ru: 'Ruso',
+    zh: 'Chino', ko: 'Coreano', ar: 'Árabe', hi: 'Hindi', sv: 'Sueco',
+  },
+};
+
+export const translatedLangName = (locale: Locale, code: string): string | undefined =>
+  languageNames[locale]?.[code];

@@ -1,11 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Upload } from 'lucide-react';
 import { languages } from '../core';
+import type { Locale } from '../i18n';
 import type { ModalName, Translate } from '../types';
 
+import { LangPicker } from './LangPicker';
 import { Modal } from './Modal';
 type Props = {
   t: Translate;
+  locale: Locale;
   setModal: Dispatch<SetStateAction<ModalName>>;
   importLang: string;
   setImportLang: Dispatch<SetStateAction<string>>;
@@ -19,6 +22,7 @@ type Props = {
 };
 export function ImportDialog({
   t,
+  locale,
   setModal,
   importLang,
   setImportLang,
@@ -35,13 +39,13 @@ export function ImportDialog({
       <p>{t('importText')}</p>
       <label>
         {t('importLanguage')}
-        <select value={importLang} onChange={(event) => setImportLang(event.target.value)}>
-          {languages.map((lang) => (
-            <option key={lang.code} value={lang.code}>
-              {lang.name}
-            </option>
-          ))}
-        </select>
+        <LangPicker
+          label={t('importLanguage')}
+          value={importLang}
+          options={languages.map((lang) => lang.code)}
+          onPick={setImportLang}
+          locale={locale}
+        />
       </label>
       <label className="file-picker">
         <Upload size={22} />

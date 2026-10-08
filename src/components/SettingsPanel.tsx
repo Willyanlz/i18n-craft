@@ -1,9 +1,11 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Globe2, Moon, Sparkles, Sun } from 'lucide-react';
 import type { AiSettings } from '../ai-settings';
-import { languages, providers, type Provider } from '../core';
+import { providers, type Provider } from '../core';
 import { type Locale } from '../i18n';
 import type { Translate } from '../types';
+
+import { LangPicker } from './LangPicker';
 
 type Props = {
   t: Translate;
@@ -50,13 +52,13 @@ export function SettingsPanel({
           </h2>
           <label>
             {t('interface')}
-            <select value={locale} onChange={(event) => setLocale(event.target.value as Locale)}>
-              {languages.slice(0, 3).map((lang) => (
-                <option key={lang.code} value={lang.code}>
-                  {lang.name}
-                </option>
-              ))}
-            </select>
+            <LangPicker
+              label={t('interface')}
+              value={locale}
+              options={['pt', 'en', 'es']}
+              onPick={(code) => setLocale(code as Locale)}
+              locale={locale}
+            />
           </label>
           <label>
             {t('appearance')}

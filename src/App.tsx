@@ -20,7 +20,7 @@ import {
   type Entry,
 } from './core';
 import { messages, type Locale, type MessageKey } from './i18n';
-import { readProjectSession, saveProjectSession } from './project-session';
+import { readProjectSession, readSelectedLangs, saveProjectSession, saveSelectedLangs } from './project-session';
 import type { ModalName, Suggestions } from './types';
 
 const LOCALE_KEY = 'i18ncraft.locale';
@@ -48,8 +48,11 @@ export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(readTheme);
   const [page, setPage] = useState<'editor' | 'settings'>('editor');
   const [entries, setEntries] = useState<Entry[]>(savedProject.entries);
-  const [selected, setSelected] = useState(savedProject.selected);
   const base = locale;
+  const [selected, setSelected] = useState<string[]>(() => {
+    const stored = readSelectedLangs(savedProject.selected);
+    return stored.includes(base) ? stored : [...stored, base];
+  });
   const [activeLang, setActiveLang] = useState(
     savedProject.selected.includes(base) ? base : savedProject.selected[0],
   );
@@ -86,6 +89,7 @@ export default function App() {
   useEffect(() => {
     try {
       saveProjectSession({ entries, selected });
+      saveSelectedLangs(selected);
     } catch {
       setNotice(messages[locale].sessionSaveError);
     }
@@ -576,6 +580,7 @@ export default function App() {
       {modal === 'import' && (
         <ImportDialog
           t={t}
+          locale={locale}
           setModal={setModal}
           importLang={importLang}
           setImportLang={setImportLang}

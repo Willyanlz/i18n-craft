@@ -3,7 +3,7 @@ import { Check, Globe2, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
 import { type KeyboardEvent } from 'react';
 import { langName, languages, tokensMatch, type Entry } from '../core';
 import { flagFor } from '../flags';
-import { type MessageKey } from '../i18n';
+import { type Locale, type MessageKey } from '../i18n';
 import type { Suggestion, Suggestions, Translate } from '../types';
 
 import { LangPicker } from './LangPicker';
@@ -119,6 +119,7 @@ export function TranslationEditor({
               setSelected((previous) => [...previous, code]);
               setActiveLang(code);
             }}
+            locale={base}
           />
         </div>
       </div>

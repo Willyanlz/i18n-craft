@@ -1,7 +1,27 @@
 import { languages, type Entry } from './core';
 
 export const PROJECT_SESSION_KEY = 'i18ncraft.project';
+export const SELECTED_LANGS_KEY = 'i18ncraft.selected';
 type ProjectSession = { entries: Entry[]; selected: string[] };
+const isValidCode = (code: unknown): code is string =>
+  typeof code === 'string' && languages.some((lang) => lang.code === code);
+export function readSelectedLangs(fallback: string[] = ['pt', 'en', 'es']): string[] {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SELECTED_LANGS_KEY) || 'null');
+    if (!Array.isArray(saved) || !saved.length) return fallback;
+    const cleaned = [...new Set(saved.filter(isValidCode))];
+    return cleaned.length ? cleaned : fallback;
+  } catch {
+    return fallback;
+  }
+}
+export function saveSelectedLangs(selected: string[]) {
+  try {
+    localStorage.setItem(SELECTED_LANGS_KEY, JSON.stringify([...new Set(selected.filter(isValidCode))]));
+  } catch {
+    /* Selection still applies without storage. */
+  }
+}
 export function readProjectSession(): ProjectSession {
   const empty: ProjectSession = { entries: [], selected: ['pt', 'en', 'es'] };
   try {

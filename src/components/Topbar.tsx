@@ -38,6 +38,7 @@ export function Topbar({ t, page, theme, setTheme, locale, setLocale }: Props) {
           value={locale}
           options={languages.slice(0, 3).map((lang) => lang.code)}
           onPick={(code) => setLocale(code as Locale)}
+          locale={locale}
         />
       </div>
     </header>
