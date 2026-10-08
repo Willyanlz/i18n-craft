@@ -20,7 +20,12 @@ import {
   type Entry,
 } from './core';
 import { messages, type Locale, type MessageKey } from './i18n';
-import { readProjectSession, readSelectedLangs, saveProjectSession, saveSelectedLangs } from './project-session';
+import {
+  readProjectSession,
+  readSelectedLangs,
+  saveProjectSession,
+  saveSelectedLangs,
+} from './project-session';
 import type { ModalName, Suggestions } from './types';
 
 const LOCALE_KEY = 'i18ncraft.locale';
@@ -170,7 +175,8 @@ export default function App() {
     [keyed, selected, errors, entries],
   );
   const active = selected.includes(activeLang) ? activeLang : base;
-  const effectivePreviewLang = active;
+  const effectivePreviewLang =
+    modal === 'export' && selected.includes(previewLang) ? previewLang : active;
   const visible = entries.filter((entry) => {
     const matches = `${entry.key} ${Object.values(entry.values).join(' ')}`
       .toLocaleLowerCase()
@@ -423,6 +429,7 @@ export default function App() {
       t={t}
       previewLang={effectivePreviewLang}
       setPreviewLang={setPreviewLang}
+      languages={modal === 'export' ? selected : undefined}
       errors={errors}
       json={json}
       copyJson={copyJson}
@@ -476,7 +483,10 @@ export default function App() {
                   <button
                     className="button primary"
                     disabled={!keyed.length || !!errors.size}
-                    onClick={() => setModal('export')}
+                    onClick={() => {
+                      setPreviewLang(active);
+                      setModal('export');
+                    }}
                   >
                     <Download size={16} />
                     {t('export')}

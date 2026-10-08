@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { Braces, Clipboard, Code2, Download } from 'lucide-react';
 import type { Translate } from '../types';
+import { langName } from '../core';
 
 import { JsonTree } from './JsonTree';
 type Props = {
@@ -9,6 +10,7 @@ type Props = {
   t: Translate;
   previewLang: string;
   setPreviewLang: Dispatch<SetStateAction<string>>;
+  languages?: string[];
   errors: Map<string, string>;
   json: string;
   copyJson: () => Promise<void>;
@@ -19,6 +21,8 @@ export function JsonPreview({
   setPreviewMode,
   t,
   previewLang,
+  setPreviewLang,
+  languages,
   errors,
   json,
   copyJson,
@@ -43,6 +47,19 @@ export function JsonPreview({
             {t('tree')}
           </button>
         </div>
+        {languages && (
+          <select
+            aria-label={t('importLanguage')}
+            value={previewLang}
+            onChange={(event) => setPreviewLang(event.target.value)}
+          >
+            {languages.map((code) => (
+              <option key={code} value={code}>
+                {langName(code)} ({code}.json)
+              </option>
+            ))}
+          </select>
+        )}
       </div>
       {errors.size ? (
         <p className="inline-error">{t('invalidExport')}</p>

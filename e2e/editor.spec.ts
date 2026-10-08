@@ -1,6 +1,34 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
 
+test('export language selection controls preview, clipboard and filename', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  await importJson(page, '{"hello":"Oi"}');
+  await page.getByRole('tab', { name: /English/ }).click();
+  await page.getByRole('textbox', { name: 'English: hello', exact: true }).fill('Hello');
+  await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  const language = dialog.getByRole('combobox');
+  await expect(language).toHaveValue('en');
+  await language.selectOption('pt');
+  await expect(dialog.locator('pre')).toContainText('"hello": "Oi"');
+  await dialog.getByRole('button', { name: 'Copiar JSON', exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(async () => JSON.parse(await navigator.clipboard.readText())))
+    .toEqual({ hello: 'Oi' });
+  await language.selectOption('en');
+  await expect(dialog.locator('pre')).toContainText('"hello": "Hello"');
+  const download = page.waitForEvent('download');
+  await dialog.getByRole('button', { name: 'Baixar JSON', exact: true }).click();
+  expect((await download).suggestedFilename()).toBe('en.json');
+  await dialog.getByRole('button', { name: 'Fechar', exact: true }).click();
+  await expect(page.getByRole('tab', { name: /English/ })).toHaveAttribute('aria-selected', 'true');
+});
+
 test('all fourteen destinations are processed automatically in groups of six', async ({ page }) => {
   await page.goto('/');
   await importJson(page, '{"hello":"Olá"}');
