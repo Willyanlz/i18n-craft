@@ -10,11 +10,32 @@ You can test the application in real-time by clicking the link below:
 
 ➔ [Access the Live Test here](https://i18n.labswill.com)
 
+## Dark theme walkthrough
+
+Real screenshots of the application with a sample appointment interface. The AI responses shown below are simulated demo data; no real credentials or patient records were used.
+
+### Find missing translations
+
+Switch language tabs to edit shared keys, compare each translation with the English source, and identify empty fields. The JSON preview reflects the selected export language.
+
+![Dark editor showing Spanish translations, missing values, English source text, and nested JSON](docs/screenshots/dark-editor.png)
+
+### Choose which suggestions to accept
+
+Filter to pending suggestions and accept or reject each translation. Placeholders such as `{date}` remain intact, and suggestions fill a value only after acceptance.
+
+![Dark AI assistance view with Spanish suggestions and accept or reject controls](docs/screenshots/dark-ai-suggestions.png)
+
+### Export the finished files
+
+Preview the resulting nested JSON, copy or download an individual language, or download every selected language as a ZIP.
+
+![Dark export dialog with completed Spanish JSON and copy, JSON download, and ZIP download actions](docs/screenshots/dark-export.png)
 
 ## Features
 
 - **Keyboard-first editing** — move between keys and translations with Tab, and create new rows with Enter.
-- **Shared keys across languages** — edit Portuguese, English, Spanish, French, German, Italian, and Japanese side by side.
+- **Shared keys across languages** — switch between 15 language tabs while keeping the same keys and viewing the source text beside each translation.
 - **Nested JSON** — write `automation.example` to generate nested objects automatically.
 - **Import and merge** — select the file's language and choose whether to keep or replace existing values.
 - **Copy and export** — preview JSON or its tree structure, copy a language, download an individual JSON file, or export all languages as a ZIP.
@@ -49,12 +70,12 @@ Open the local URL printed by Vite. The development server also serves `/api/tra
 
 ### Keyboard shortcuts
 
-| Shortcut | Action |
-| --- | --- |
-| `Tab` | Move to the next cell; create a row after the final translation cell. |
-| `Shift+Tab` | Move to the previous cell. |
-| `Enter` | Create a row and focus its key. |
-| `Shift+Enter` | Insert a line break in a translation value. |
+| Shortcut      | Action                                                                |
+| ------------- | --------------------------------------------------------------------- |
+| `Tab`         | Move to the next cell; create a row after the final translation cell. |
+| `Shift+Tab`   | Move to the previous cell.                                            |
+| `Enter`       | Create a row and focus its key.                                       |
+| `Shift+Enter` | Insert a line break in a translation value.                           |
 
 ### Nested keys
 
@@ -80,13 +101,12 @@ When merging an existing language, choose whether imported values replace existi
 
 Enable AI assistance in the editor or Settings, select a provider, and enter your API key. The initial model names are editable defaults; model availability and usage costs depend on your provider account.
 
-A single global action requests suggestions for all eligible keys in batches of up to 100. Keys are grouped by their missing target languages, so only empty fields are requested from the provider. It appears only when AI is enabled and a valid key has a non-empty value in the interface language and a missing translation in another selected language. Rows without source text are skipped.
+A single global action requests suggestions for all eligible keys in batches of up to 100 keys and 6 target languages per request. Larger projects continue automatically: 14 target languages are processed in groups of 6, 6, and 2. Keys are grouped by their missing target languages, so only empty fields are requested from the provider. It appears only when AI is enabled and a valid key has a non-empty value in the interface language and a missing translation in another selected language. Rows without source text are skipped.
 
 - **Accept** fills the translation and clears its missing-value warning.
 - **Reject** moves focus to the input for manual editing.
 - Existing translations are not automatically replaced.
 - Suggestions based on a source that changed while the request was running are discarded.
-
 
 The application checks placeholders such as `{name}`, `{{count}}`, `${value}`, supported printf tokens, and HTML tags before displaying suggestions. This is not a complete ICU MessageFormat parser.
 
@@ -114,13 +134,13 @@ In production, requests use HTTPS. The translation endpoint uses the API key for
 
 Built with React, TypeScript, Vite, Lucide icons, and fflate. Vitest covers JSON handling and the translation endpoint; Playwright covers browser workflows.
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the editor and local translation endpoint. |
-| `npm run build` | Type-check and build the production frontend. |
-| `npm run preview` | Preview the static production build, without the AI endpoint. |
-| `npm test` | Run unit and endpoint tests. |
-| `npm run test:e2e` | Run browser tests. |
+| Command            | Purpose                                                       |
+| ------------------ | ------------------------------------------------------------- |
+| `npm run dev`      | Start the editor and local translation endpoint.              |
+| `npm run build`    | Type-check and build the production frontend.                 |
+| `npm run preview`  | Preview the static production build, without the AI endpoint. |
+| `npm test`         | Run unit and endpoint tests.                                  |
+| `npm run test:e2e` | Run browser tests.                                            |
 
 Install Playwright's Chromium before running browser tests for the first time:
 
@@ -146,6 +166,22 @@ vercel.json           Build, function, and security-header configuration
 ## Contributing
 
 Issues and pull requests are welcome. Include a clear description of the problem or proposed improvement, keep changes focused, and run the relevant tests and production build before submitting.
+
+### Code formatting
+
+TypeScript, TSX, CSS, HTML, JSON, and Markdown files use Prettier with two-space
+indentation and a preferred line width of 100 characters. The configuration lives
+in `.prettierrc.json`; `.editorconfig` provides matching defaults for editors.
+Generated files, dependencies, the lockfile, and image assets are excluded.
+
+```sh
+npm run format        # Format the project
+npm run format:check  # Check formatting without changing files
+```
+
+If your editor supports Prettier, use the project's installed version and enable
+format on save. Run `npm run format:check`, `npm test`, and `npm run build` before
+submitting a pull request. Run `npm run test:e2e` for changes to browser workflows.
 
 ## License
 

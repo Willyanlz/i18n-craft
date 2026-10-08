@@ -20,15 +20,20 @@ export const newEntry = (): Entry => ({ id: crypto.randomUUID(), key: '', values
 const forbidden = new Set(['__proto__', 'prototype', 'constructor']);
 export function validateKeys(entries: Entry[]): Map<string, string> {
   const errors = new Map<string, string>();
-  const keyed = entries.filter(e => e.key.trim());
+  const keyed = entries.filter((e) => e.key.trim());
   const byKey = new Map<string, Entry[]>();
   for (const entry of keyed) byKey.set(entry.key, [...(byKey.get(entry.key) || []), entry]);
   for (const entry of entries) {
-    if (!entry.key.trim() && Object.values(entry.values).some(Boolean)) errors.set(entry.id, 'empty');
+    if (!entry.key.trim() && Object.values(entry.values).some(Boolean))
+      errors.set(entry.id, 'empty');
   }
   for (const entry of keyed) {
     const parts = entry.key.split('.');
-    if (parts.some(p => !p.trim() || p !== p.trim() || forbidden.has(p)) || entry.key.length > 300) errors.set(entry.id, 'invalid');
+    if (
+      parts.some((p) => !p.trim() || p !== p.trim() || forbidden.has(p)) ||
+      entry.key.length > 300
+    )
+      errors.set(entry.id, 'invalid');
     if (byKey.get(entry.key)!.length > 1) errors.set(entry.id, 'conflict');
     for (let index = 1; index < parts.length; index++) {
       const ancestors = byKey.get(parts.slice(0, index).join('.'));
@@ -43,15 +48,54 @@ export function validateKeys(entries: Entry[]): Map<string, string> {
 export function parseJsonInput(raw: string): unknown {
   const text = raw.replace(/^\uFEFF/, '').trim();
   if (!text) throw new Error('invalid');
-  try { return JSON.parse(text); } catch { /* try tolerant variants below */ }
-  const noTrailingCommas = text.replace(/,\s*([}\]])/g, '$1');
+  try {
+    return JSON.parse(text);
+  } catch {
+    /* try tolerant variants below */
+  }
+  const removeTrailingCommas = (input: string) => {
+    let result = '',
+      inString = false,
+      escaped = false;
+    for (let index = 0; index < input.length; index++) {
+      const char = input[index];
+      if (inString) {
+        result += char;
+        if (escaped) escaped = false;
+        else if (char === '\\') escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') inString = true;
+      if (char === ',') {
+        let next = index + 1;
+        while (/\s/.test(input[next] || '') && next < input.length) next++;
+        if (input[next] === '}' || input[next] === ']') continue;
+      }
+      result += char;
+    }
+    return result;
+  };
+  const noTrailingCommas = removeTrailingCommas(text);
   if (noTrailingCommas !== text) {
-    try { return JSON.parse(noTrailingCommas); } catch { /* continue */ }
+    try {
+      return JSON.parse(noTrailingCommas);
+    } catch {
+      /* continue */
+    }
   }
   if (!text.startsWith('{') || !text.endsWith('}')) {
-    try { return JSON.parse(`{${text}}`); } catch { /* continue */ }
+    try {
+      return JSON.parse(`{${text}}`);
+    } catch {
+      /* continue */
+    }
     if (noTrailingCommas !== text) {
-      try { return JSON.parse(`{${noTrailingCommas}}`); } catch { /* continue */ }
+      try {
+        return JSON.parse(removeTrailingCommas(`{${text}}`));
+      } catch {
+        /* continue */
+      }
     }
   }
   throw new Error('invalid');
@@ -68,12 +112,15 @@ export function flattenJson(value: unknown): Record<string, string> {
     for (const [key, child] of Object.entries(obj)) {
       if (!key.trim() || key !== key.trim() || forbidden.has(key)) throw new Error('invalid');
       const segments = key.split('.');
-      if (segments.some(p => !p.trim() || p !== p.trim() || forbidden.has(p))) throw new Error('invalid');
+      if (segments.some((p) => !p.trim() || p !== p.trim() || forbidden.has(p)))
+        throw new Error('invalid');
       const path = prefix ? `${prefix}.${key}` : key;
       if (path.length > 300) throw new Error('invalid');
       if (Object.hasOwn(output, path)) throw new Error('conflict');
-      if (typeof child === 'string') { output[path] = child; count++; }
-      else visit(child, path, depth + 1);
+      if (typeof child === 'string') {
+        output[path] = child;
+        count++;
+      } else visit(child, path, depth + 1);
       if (count > 5000) throw new Error('limit');
     }
   };
@@ -84,7 +131,7 @@ export function flattenJson(value: unknown): Record<string, string> {
 export function buildJson(entries: Entry[], lang: string) {
   if (validateKeys(entries).size) throw new Error('invalid');
   const result: Record<string, unknown> = Object.create(null);
-  for (const entry of entries.filter(e => e.key.trim())) {
+  for (const entry of entries.filter((e) => e.key.trim())) {
     const parts = entry.key.split('.');
     let cursor = result;
     for (const part of parts.slice(0, -1)) {
@@ -96,16 +143,26 @@ export function buildJson(entries: Entry[], lang: string) {
   return JSON.stringify(result, null, 2);
 }
 export function protectedTokens(value: string): string[] {
-  return (value.match(/\{\{[^{}]+\}\}|\{[^{}]+\}|<\/?[A-Za-z][^>]*>|%(?:\d+\$)?[sdif]|\$\{[^{}]+\}/g) || []).sort();
+  return (
+    value.match(/\{\{[^{}]+\}\}|\{[^{}]+\}|<\/?[A-Za-z][^>]*>|%(?:\d+\$)?[sdif]|\$\{[^{}]+\}/g) ||
+    []
+  ).sort();
 }
 export function tokensMatch(source: string, translated: string) {
   return JSON.stringify(protectedTokens(source)) === JSON.stringify(protectedTokens(translated));
 }
-export function mergeJson(entries: Entry[], value: unknown, lang: string, overwrite: boolean): Entry[] {
+export function mergeJson(
+  entries: Entry[],
+  value: unknown,
+  lang: string,
+  overwrite: boolean,
+): Entry[] {
   const flat = flattenJson(value);
-  const merged = entries.filter(e => e.key || Object.values(e.values).some(Boolean)).map(e => ({ ...e, values: { ...e.values } }));
+  const merged = entries
+    .filter((e) => e.key || Object.values(e.values).some(Boolean))
+    .map((e) => ({ ...e, values: { ...e.values } }));
   for (const [key, text] of Object.entries(flat)) {
-    const existing = merged.find(e => e.key === key);
+    const existing = merged.find((e) => e.key === key);
     if (existing) {
       if (overwrite || existing.values[lang] === undefined) {
         existing.values[lang] = text;

@@ -1,5 +1,9 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { PROJECT_SESSION_KEY, readProjectSession, saveProjectSession } from '../src/project-session';
+import {
+  PROJECT_SESSION_KEY,
+  readProjectSession,
+  saveProjectSession,
+} from '../src/project-session';
 
 afterEach(() => vi.unstubAllGlobals());
 it('restores existing work and rewrites only supported fields', () => {
@@ -10,9 +14,21 @@ it('restores existing work and rewrites only supported fields', () => {
     removeItem: (key: string) => stored.delete(key),
   });
   const entry = { id: 'saved-id', key: 'auto.test', values: { pt: 'Testando' } };
-  stored.set(PROJECT_SESSION_KEY, JSON.stringify({ version: 1, entries: [{ ...entry, obsoleteField: [] }], selected: ['pt', 'en', 'es'], obsoleteProjectField: '' }));
+  stored.set(
+    PROJECT_SESSION_KEY,
+    JSON.stringify({
+      version: 1,
+      entries: [{ ...entry, obsoleteField: [] }],
+      selected: ['pt', 'en', 'es'],
+      obsoleteProjectField: '',
+    }),
+  );
   const project = readProjectSession();
   expect(project).toEqual({ entries: [entry], selected: ['pt', 'en', 'es'] });
   saveProjectSession(project);
-  expect(JSON.parse(stored.get(PROJECT_SESSION_KEY)!)).toEqual({ version: 1, entries: [entry], selected: ['pt', 'en', 'es'] });
+  expect(JSON.parse(stored.get(PROJECT_SESSION_KEY)!)).toEqual({
+    version: 1,
+    entries: [entry],
+    selected: ['pt', 'en', 'es'],
+  });
 });
