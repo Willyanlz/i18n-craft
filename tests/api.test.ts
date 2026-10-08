@@ -29,6 +29,31 @@ async function request(input: unknown = body, method = 'POST', origin = 'http://
 }
 afterEach(() => vi.unstubAllGlobals());
 describe('translation endpoint', () => {
+  it('retries a temporary provider failure without changing the request', async () => {
+    const content = JSON.stringify({ translations: [{ id: '1', values: { en: 'Hello {name}' } }] });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ choices: [{ message: { content } }] }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await request()).toEqual({ status: 200, body: JSON.parse(content) });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]).toEqual(fetchMock.mock.calls[0]);
+  });
+  it('stops after three attempts and preserves provider status without leaking its body', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: false, status: 503, text: async () => 'test-secret' });
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await request()).toEqual({
+      status: 502,
+      body: { error: 'provider', providerStatus: 503 },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
   it('rejects invalid methods, origins, providers and targets before network access', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

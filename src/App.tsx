@@ -379,7 +379,9 @@ export default function App() {
                 ? 'aiCredentialsError'
                 : data.providerStatus === 429
                   ? 'aiQuotaError'
-                  : undefined;
+                  : [502, 503, 504].includes(data.providerStatus)
+                    ? 'aiUnavailableError'
+                    : undefined;
           if (providerError) {
             setNotice(`${providers[provider].name} (${model}): ${t(providerError)}`);
             return;

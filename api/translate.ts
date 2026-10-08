@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { setTimeout as delay } from 'node:timers/promises';
 type Provider = 'gemini' | 'claude' | 'openai' | 'openrouter';
 type RequestBody = {
   provider: Provider;
@@ -179,13 +180,20 @@ export default async function handler(
       };
     }
     try {
-      const upstream = await fetch(url, {
+      const signal = AbortSignal.timeout(50000);
+      const options = {
         method: 'POST',
         headers,
         body: JSON.stringify(payload),
-        signal: AbortSignal.timeout(50000),
-        redirect: 'error',
-      });
+        signal,
+        redirect: 'error' as const,
+      };
+      let upstream = await fetch(url, options);
+      for (let attempt = 0; attempt < 2 && [502, 503, 504].includes(upstream.status); attempt++) {
+        await upstream.body?.cancel();
+        await delay(1000 * 2 ** attempt, undefined, { signal });
+        upstream = await fetch(url, options);
+      }
       if (!upstream.ok)
         return send(upstream.status === 429 ? 429 : 502, {
           error: 'provider',

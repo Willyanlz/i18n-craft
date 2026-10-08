@@ -1,5 +1,7 @@
 export const messages = {
   pt: {
+    aiUnavailableError:
+      'O provedor de IA está temporariamente indisponível após novas tentativas. As sugestões anteriores foram mantidas. Tente novamente em alguns instantes.',
     nesting: 'Aninhar',
     nestingHelp:
       'Marcado: a.b cria um objeto aninhado. Desmarcado: preserva a.b como uma chave literal.',
@@ -124,6 +126,8 @@ export const messages = {
     tokenLabel: 'Variáveis ou tags diferentes do texto base',
   },
   en: {
+    aiUnavailableError:
+      'The AI provider is temporarily unavailable after retries. Previous suggestions were kept. Please try again shortly.',
     nesting: 'Nest key',
     nestingHelp: 'Checked: a.b creates a nested object. Unchecked: keeps a.b as a literal key.',
     scrollTop: 'Go to top of page',
@@ -243,6 +247,8 @@ export const messages = {
     tokenLabel: 'Variables or tags differ from base text',
   },
   es: {
+    aiUnavailableError:
+      'El proveedor de IA está temporalmente indisponible tras los reintentos. Se conservaron las sugerencias anteriores. Inténtalo de nuevo en unos momentos.',
     nesting: 'Anidar',
     nestingHelp:
       'Marcado: a.b crea un objeto anidado. Desmarcado: conserva a.b como clave literal.',
