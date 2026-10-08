@@ -6,6 +6,7 @@ import { ImportDialog } from './components/ImportDialog';
 import { JsonPreview } from './components/JsonPreview';
 import { Modal } from './components/Modal';
 import { SettingsPanel } from './components/SettingsPanel';
+import { ScrollControls } from './components/ScrollControls';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { TranslationEditor } from './components/TranslationEditor';
@@ -664,6 +665,7 @@ export default function App() {
           </div>
         </Modal>
       )}
+      {!modal && <ScrollControls t={t} />}
       {notice && (
         <div className="toast" role="status">
           <FileJson size={18} />

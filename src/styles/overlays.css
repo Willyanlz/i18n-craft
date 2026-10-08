@@ -55,6 +55,34 @@ dialog::backdrop {
 .modal-inner > .help-text {
   margin-top: 14px;
 }
+.scroll-controls {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scroll-controls button {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #292d32;
+  box-shadow: 0 3px 12px #0002;
+}
+.scroll-controls button:hover {
+  filter: brightness(1.08);
+}
+.scroll-controls button:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
+}
+.scroll-controls + .toast {
+  bottom: calc(120px + env(safe-area-inset-bottom));
+}
 .toast {
   position: fixed;
   bottom: 25px;

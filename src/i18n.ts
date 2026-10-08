@@ -1,5 +1,7 @@
 export const messages = {
   pt: {
+    scrollTop: 'Ir ao início da página',
+    scrollBottom: 'Ir ao fim da página',
     oneKey: 'Uma chave.',
     everyLanguage: 'Todos os idiomas.',
     sessionSaveError:
@@ -119,6 +121,8 @@ export const messages = {
     tokenLabel: 'Variáveis ou tags diferentes do texto base',
   },
   en: {
+    scrollTop: 'Go to top of page',
+    scrollBottom: 'Go to bottom of page',
     oneKey: 'One key.',
     everyLanguage: 'Every language.',
     sessionSaveError: 'Could not save the current session. Export your files before reloading.',
@@ -234,6 +238,8 @@ export const messages = {
     tokenLabel: 'Variables or tags differ from base text',
   },
   es: {
+    scrollTop: 'Ir al inicio de la página',
+    scrollBottom: 'Ir al final de la página',
     oneKey: 'Una clave.',
     everyLanguage: 'Todos los idiomas.',
     sessionSaveError:
