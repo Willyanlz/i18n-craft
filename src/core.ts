@@ -22,6 +22,7 @@ export type Entry = {
   key: string;
   values: Record<string, string>;
   types?: Record<string, ValueType>;
+  nested?: boolean;
 };
 export const newEntry = (): Entry => ({ id: crypto.randomUUID(), key: '', values: {} });
 export function parseJsonInput(raw: string): unknown {

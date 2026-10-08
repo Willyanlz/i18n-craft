@@ -45,6 +45,7 @@ export function readProjectSession(): ProjectSession {
           !entry ||
           typeof entry.id !== 'string' ||
           typeof entry.key !== 'string' ||
+          (entry.nested !== undefined && typeof entry.nested !== 'boolean') ||
           !entry.values ||
           typeof entry.values !== 'object' ||
           Array.isArray(entry.values) ||
@@ -62,11 +63,12 @@ export function readProjectSession(): ProjectSession {
     if (new Set(saved.entries.map((entry: Entry) => entry.id)).size !== saved.entries.length)
       return empty;
     return {
-      entries: saved.entries.map(({ id, key, values, types }: Entry) => ({
+      entries: saved.entries.map(({ id, key, values, types, nested }: Entry) => ({
         id,
         key,
         values,
         ...(types ? { types } : {}),
+        ...(nested !== undefined ? { nested } : {}),
       })),
       selected: [...new Set<string>(saved.selected)],
     };
@@ -82,11 +84,12 @@ export function saveProjectSession(project: ProjectSession) {
       PROJECT_SESSION_KEY,
       JSON.stringify({
         version: 1,
-        entries: project.entries.map(({ id, key, values, types }) => ({
+        entries: project.entries.map(({ id, key, values, types, nested }) => ({
           id,
           key,
           values,
           ...(types ? { types } : {}),
+          ...(nested !== undefined ? { nested } : {}),
         })),
         selected: project.selected,
       }),

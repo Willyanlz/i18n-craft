@@ -1,5 +1,8 @@
 export const messages = {
   pt: {
+    nesting: 'Aninhar',
+    nestingHelp:
+      'Marcado: a.b cria um objeto aninhado. Desmarcado: preserva a.b como uma chave literal.',
     scrollTop: 'Ir ao início da página',
     scrollBottom: 'Ir ao fim da página',
     oneKey: 'Uma chave.',
@@ -121,6 +124,8 @@ export const messages = {
     tokenLabel: 'Variáveis ou tags diferentes do texto base',
   },
   en: {
+    nesting: 'Nest key',
+    nestingHelp: 'Checked: a.b creates a nested object. Unchecked: keeps a.b as a literal key.',
     scrollTop: 'Go to top of page',
     scrollBottom: 'Go to bottom of page',
     oneKey: 'One key.',
@@ -238,6 +243,9 @@ export const messages = {
     tokenLabel: 'Variables or tags differ from base text',
   },
   es: {
+    nesting: 'Anidar',
+    nestingHelp:
+      'Marcado: a.b crea un objeto anidado. Desmarcado: conserva a.b como clave literal.',
     scrollTop: 'Ir al inicio de la página',
     scrollBottom: 'Ir al final de la página',
     oneKey: 'Una clave.',

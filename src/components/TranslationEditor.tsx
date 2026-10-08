@@ -13,6 +13,7 @@ import {
 import { type KeyboardEvent, useState } from 'react';
 import { langName, languages, tokensMatch, valueType, type Entry } from '../core';
 import { flagFor } from '../flags';
+import { editKey, isNestedKey, keyLabel } from '../json-format';
 import { type Locale, type MessageKey } from '../i18n';
 import type { Suggestion, Suggestions, Translate } from '../types';
 
@@ -232,11 +233,24 @@ export function TranslationEditor({
                       id={`key-${entry.id}`}
                       aria-label={`${t('key')} ${index + 1}`}
                       className="key-input"
-                      value={entry.key}
+                      value={keyLabel(entry)}
                       placeholder={t('keyPlaceholder')}
-                      onChange={(event) => updateEntry(entry.id, { key: event.target.value })}
+                      onChange={(event) =>
+                        updateEntry(entry.id, editKey(event.target.value, isNestedKey(entry)))
+                      }
                       onKeyDown={(event) => onCellKey(event, false)}
                     />
+                    <label className="nesting-toggle" title={t('nestingHelp')}>
+                      <input
+                        type="checkbox"
+                        checked={isNestedKey(entry)}
+                        aria-label={`${t('nesting')} ${index + 1}`}
+                        onChange={(event) =>
+                          updateEntry(entry.id, editKey(keyLabel(entry), event.target.checked))
+                        }
+                      />
+                      {t('nesting')}
+                    </label>
                     {errors.has(entry.id) && (
                       <span className="field-error">{t(errors.get(entry.id) as MessageKey)}</span>
                     )}

@@ -36,7 +36,7 @@ Preview the resulting nested JSON, copy or download an individual language, or d
 
 - **Keyboard-first editing** — move between keys and translations with Tab, and create new rows with Enter.
 - **Shared keys across languages** — switch between 15 language tabs while keeping the same keys and viewing the source text beside each translation.
-- **Nested JSON** — write `automation.example` to generate nested objects automatically.
+- **Nested JSON** — enable **Nest key** and write `automation.example` to generate nested objects.
 - **Import and merge** — select the file's language and choose whether to keep or replace existing values.
 - **Copy and export** — preview JSON or its tree structure, copy a language, download an individual JSON file, or export all languages as a ZIP.
 - **Optional AI assistance** — request suggestions through Gemini, Claude, OpenAI, or OpenRouter using your own API key and an editable model selection.
@@ -79,7 +79,7 @@ Open the local URL printed by Vite. The development server also serves `/api/tra
 
 ### Nested keys
 
-Enter `automation.example` as the key and `Example` as the English value:
+Enable **Nest key**, enter `automation.example` as the key and `Example` as the English value:
 
 ```json
 {
@@ -95,7 +95,7 @@ Keys are shared across selected languages; values are independent. Missing trans
 
 Import JSON with strings, arrays, numbers, booleans, null, and empty nested objects or arrays. Literal keys (including dots and surrounding spaces) and value types are preserved through editing, session reloads, and export. Array items are editable individually. Non-text fields show their JSON type and are excluded from AI translation.
 
-The editor displays a literal dotted key as `["a.b"]`, a nested path as `a.b`, and an array item as `days[0]`. These are editor paths; exported keys retain their original names. When adding keys, use the same notation to distinguish literal names from nested paths. Invalid edits to typed values block export until corrected. Missing translations export as empty strings.
+Each key has a **Nest key** checkbox. Unchecked, `a.b` is a literal key; checked, it becomes a nested path. New keys start unchecked, and imported keys reflect their original structure. Literal keys are shown without escape notation. Nested paths can still use brackets for mixed structures, such as `["a.b"].child` or `days[0]`. Exported keys retain their original names. Invalid edits to typed values block export until corrected. Missing translations export as empty strings.
 
 A leading BOM, trailing commas, or a fragment without outer braces is repaired automatically. Import limits are 2 MB per file, 5,000 fields, and 50 levels of nesting. Conflicting object/array structures across languages are rejected without modifying the project. Nonempty arrays can also be imported at the root; an empty root object adds no fields.
 

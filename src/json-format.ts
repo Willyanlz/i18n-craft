@@ -47,6 +47,29 @@ export function valueType(entry: Entry, lang: string): ValueType {
   return entry.types?.[lang] ?? 'string';
 }
 
+export function isNestedKey(entry: Entry): boolean {
+  if (entry.nested !== undefined) return entry.nested;
+  try {
+    const path = parsePath(entry.key);
+    return path.length > 1 || typeof path[0] === 'number';
+  } catch {
+    return !!entry.key;
+  }
+}
+
+export function keyLabel(entry: Entry): string {
+  if (isNestedKey(entry)) return entry.key;
+  try {
+    return String(parsePath(entry.key)[0]);
+  } catch {
+    return entry.key;
+  }
+}
+
+export function editKey(text: string, nested: boolean): Pick<Entry, 'key' | 'nested'> {
+  return { key: nested || !text ? text : formatPath([text]), nested };
+}
+
 function readValue(entry: Entry, lang: string): unknown {
   const text = entry.values[lang] ?? '';
   const type = valueType(entry, lang);

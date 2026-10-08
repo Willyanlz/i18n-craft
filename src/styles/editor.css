@@ -450,6 +450,22 @@ td.row-number {
   min-width: 220px;
   width: 25%;
 }
+.nesting-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  cursor: pointer;
+}
+.nesting-toggle input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+}
 .key-cell > input {
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
   font-size: 11px;

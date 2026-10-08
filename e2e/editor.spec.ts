@@ -1,6 +1,31 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
 
+test('per-key nesting toggles literal dots and survives reload', async ({ page }) => {
+  await page.goto('/');
+  await importJson(page, '{"a.b":"literal","parent":{"child":"nested"}}');
+  const checkbox = page.getByRole('checkbox', { name: 'Aninhar 1', exact: true });
+  await expect(checkbox).not.toBeChecked();
+  await expect(page.getByRole('checkbox', { name: 'Aninhar 2', exact: true })).toBeChecked();
+  await expect(page.getByRole('textbox', { name: 'CHAVE 1', exact: true })).toHaveValue('a.b');
+  await checkbox.check();
+  await expect
+    .poll(async () => JSON.parse(await page.locator('pre').innerText()))
+    .toEqual({ a: { b: 'literal' }, parent: { child: 'nested' } });
+  await page.reload();
+  await expect(checkbox).toBeChecked();
+  await checkbox.uncheck();
+  await expect
+    .poll(async () => JSON.parse(await page.locator('pre').innerText()))
+    .toEqual({ 'a.b': 'literal', parent: { child: 'nested' } });
+  await page.getByRole('textbox', { name: 'CHAVE 1', exact: true }).fill('x.y');
+  await page.reload();
+  await expect(checkbox).not.toBeChecked();
+  await expect
+    .poll(async () => JSON.parse(await page.locator('pre').innerText()))
+    .toEqual({ 'x.y': 'literal', parent: { child: 'nested' } });
+});
+
 test('accept all applies valid suggestions across languages without overwriting edits', async ({
   page,
 }) => {
@@ -146,6 +171,8 @@ test('keyboard editing builds nested JSON and creates rows', async ({ page }) =>
   await page.goto('/');
   await page.getByRole('button', { name: 'Adicionar chave', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'CHAVE 1', exact: true })).toBeFocused();
+  await page.getByRole('checkbox', { name: 'Aninhar 1', exact: true }).check();
+  await page.getByRole('textbox', { name: 'CHAVE 1', exact: true }).focus();
   await page.keyboard.type('automation.example');
   await page.keyboard.press('Tab');
   await expect(
