@@ -93,7 +93,11 @@ Keys are shared across selected languages; values are independent. Missing trans
 
 ### Import format
 
-Import JSON objects whose leaf values are strings. Literal dots split nested paths, nested empty objects are skipped, and a leading BOM, trailing commas, or a fragment without outer braces is repaired automatically. Arrays, numbers, and duplicate flattened keys are rejected to avoid ambiguous conversions. A fully empty document is rejected because there is nothing to import. Import limits are 2 MB per file, 5,000 keys, and 20 levels of nesting.
+Import JSON with strings, arrays, numbers, booleans, null, and empty nested objects or arrays. Literal keys (including dots and surrounding spaces) and value types are preserved through editing, session reloads, and export. Array items are editable individually. Non-text fields show their JSON type and are excluded from AI translation.
+
+The editor displays a literal dotted key as `["a.b"]`, a nested path as `a.b`, and an array item as `days[0]`. These are editor paths; exported keys retain their original names. When adding keys, use the same notation to distinguish literal names from nested paths. Invalid edits to typed values block export until corrected. Missing translations export as empty strings.
+
+A leading BOM, trailing commas, or a fragment without outer braces is repaired automatically. Import limits are 2 MB per file, 5,000 fields, and 50 levels of nesting. Conflicting object/array structures across languages are rejected without modifying the project. Nonempty arrays can also be imported at the root; an empty root object adds no fields.
 
 When merging an existing language, choose whether imported values replace existing values or leave them intact.
 

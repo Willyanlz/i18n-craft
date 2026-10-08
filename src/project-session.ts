@@ -17,7 +17,10 @@ export function readSelectedLangs(fallback: string[] = ['pt', 'en', 'es']): stri
 }
 export function saveSelectedLangs(selected: string[]) {
   try {
-    localStorage.setItem(SELECTED_LANGS_KEY, JSON.stringify([...new Set(selected.filter(isValidCode))]));
+    localStorage.setItem(
+      SELECTED_LANGS_KEY,
+      JSON.stringify([...new Set(selected.filter(isValidCode))]),
+    );
   } catch {
     /* Selection still applies without storage. */
   }
@@ -45,14 +48,26 @@ export function readProjectSession(): ProjectSession {
           !entry.values ||
           typeof entry.values !== 'object' ||
           Array.isArray(entry.values) ||
-          Object.values(entry.values).some((value) => typeof value !== 'string'),
+          Object.values(entry.values).some((value) => typeof value !== 'string') ||
+          (entry.types !== undefined &&
+            (!entry.types ||
+              typeof entry.types !== 'object' ||
+              Array.isArray(entry.types) ||
+              Object.values(entry.types).some(
+                (type) => !['string', 'number', 'boolean', 'null', 'json'].includes(type),
+              ))),
       )
     )
       return empty;
     if (new Set(saved.entries.map((entry: Entry) => entry.id)).size !== saved.entries.length)
       return empty;
     return {
-      entries: saved.entries.map(({ id, key, values }: Entry) => ({ id, key, values })),
+      entries: saved.entries.map(({ id, key, values, types }: Entry) => ({
+        id,
+        key,
+        values,
+        ...(types ? { types } : {}),
+      })),
       selected: [...new Set<string>(saved.selected)],
     };
   } catch {
@@ -67,7 +82,12 @@ export function saveProjectSession(project: ProjectSession) {
       PROJECT_SESSION_KEY,
       JSON.stringify({
         version: 1,
-        entries: project.entries.map(({ id, key, values }) => ({ id, key, values })),
+        entries: project.entries.map(({ id, key, values, types }) => ({
+          id,
+          key,
+          values,
+          ...(types ? { types } : {}),
+        })),
         selected: project.selected,
       }),
     );

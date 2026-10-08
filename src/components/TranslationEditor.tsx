@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
-import { langName, languages, tokensMatch, type Entry } from '../core';
+import { langName, languages, tokensMatch, valueType, type Entry } from '../core';
 import { flagFor } from '../flags';
 import { type Locale, type MessageKey } from '../i18n';
 import type { Suggestion, Suggestions, Translate } from '../types';
@@ -186,14 +186,14 @@ export function TranslationEditor({
               <th className="right-column">
                 <span className="sr-only">{t('remove')}</span>
                 <button
-                    className="icon-button value-collapse"
-                    aria-expanded={!valuesCollapsed}
-                    aria-label={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
-                    title={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
-                    onClick={() => setValuesCollapsed((was) => !was)}
-                  >
-                    {valuesCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
-                    <span>{t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}</span>
+                  className="icon-button value-collapse"
+                  aria-expanded={!valuesCollapsed}
+                  aria-label={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
+                  title={t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}
+                  onClick={() => setValuesCollapsed((was) => !was)}
+                >
+                  {valuesCollapsed ? <ChevronDown size={15} /> : <ChevronUp size={15} />}
+                  <span>{t(valuesCollapsed ? 'valuesExpand' : 'valuesCollapse')}</span>
                 </button>
               </th>
             </tr>
@@ -218,7 +218,6 @@ export function TranslationEditor({
                       aria-label={`${t('key')} ${index + 1}`}
                       className="key-input"
                       value={entry.key}
-                      maxLength={300}
                       placeholder={t('keyPlaceholder')}
                       onChange={(event) => updateEntry(entry.id, { key: event.target.value })}
                       onKeyDown={(event) => onCellKey(event, false)}
@@ -228,6 +227,9 @@ export function TranslationEditor({
                     )}
                   </td>
                   <td className="value-cell">
+                    {valueType(entry, active) !== 'string' && (
+                      <span className="muted">{valueType(entry, active)}</span>
+                    )}
                     {valuesCollapsed ? (
                       <span className="value-collapsed">
                         {entry.values[active]?.trim() || t('fillMissing')}
@@ -248,7 +250,12 @@ export function TranslationEditor({
                         />
                         {baseText ? (
                           <span className="base-reference">
-                            <img className="lang-flag" src={flagFor(base)} alt="" aria-hidden="true" />
+                            <img
+                              className="lang-flag"
+                              src={flagFor(base)}
+                              alt=""
+                              aria-hidden="true"
+                            />
                             <span className="sr-only">{`${langName(base)}: `}</span>
                             <span className="base-reference-text">{baseText}</span>
                           </span>

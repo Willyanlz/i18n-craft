@@ -52,17 +52,61 @@ describe('JSON editing and merging', () => {
     ).toBe(2);
   });
   it('accepts dotted keys as literal entry keys', () => {
-    expect(flattenJson({ 'a.b': 'text' })).toEqual({ 'a.b': 'text' });
+    expect(flattenJson({ 'a.b': 'text' })).toEqual({ '["a.b"]': 'text' });
   });
-  it.each([
-    [],
-    { n: 1 },
-    { a: {} },
-    { ' a': 'text' },
-    JSON.parse('{"__proto__":{"polluted":"yes"}}'),
-  ])('rejects unsupported or unsafe input %j', (input) => {
-    expect(() => flattenJson(input)).toThrow();
+  it.each([null, true, 12, 'text', { value: Infinity }])(
+    'rejects unsupported input %j',
+    (input) => {
+      expect(() => flattenJson(input)).toThrow();
+      expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+    },
+  );
+  it('preserves literal paths, whitespace, arrays, empty containers and scalar types', () => {
+    const source = {
+      'a.b': 'literal',
+      a: { b: 'nested' },
+      ' selected': 'Selected',
+      'from ': 'From',
+      '': 'empty key',
+      'text...': 'Dots',
+      '[0]': 'Literal brackets',
+      primeng: { firstDayOfWeek: 0, dayNames: ['Sunday', 'Monday'] },
+      mixed: [true, null, 2.5, { 'a.b': 'value' }, [], {}],
+      empty: {},
+      list: [],
+      enabled: false,
+    };
+    const entries = mergeJson([], source, 'pt', false);
+    expect(validateKeys(entries).size).toBe(0);
+    expect(JSON.parse(buildJson(entries, 'pt'))).toEqual(source);
+    entries.find((entry) => entry.key === 'primeng.dayNames[1]')!.values.pt = 'Changed';
+    expect(JSON.parse(buildJson(entries, 'pt')).primeng.dayNames).toEqual(['Sunday', 'Changed']);
+  });
+  it('preserves prototype-like keys as data without polluting objects', () => {
+    const source = JSON.parse(
+      '{"__proto__":{"polluted":"yes"},"constructor":{"prototype":"text"}}',
+    );
+    expect(JSON.parse(buildJson(mergeJson([], source, 'pt', false), 'pt'))).toEqual(source);
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+  it('merges types per language and validates edited non-text values', () => {
+    const original = mergeJson([], { count: 0 }, 'pt', false);
+    const merged = mergeJson(original, { count: 'zero' }, 'en', false);
+    expect(JSON.parse(buildJson(merged, 'pt'))).toEqual({ count: 0 });
+    expect(JSON.parse(buildJson(merged, 'en'))).toEqual({ count: 'zero' });
+    expect(JSON.parse(buildJson(mergeJson(merged, { count: 'text' }, 'pt', true), 'pt'))).toEqual({
+      count: 'text',
+    });
+    merged[0].values.pt = 'not a number';
+    expect(validateKeys(merged).get(merged[0].id)).toBe('invalidValue');
+    expect(() => buildJson(merged, 'pt')).toThrow();
+    expect(original[0].values.pt).toBe('0');
+  });
+  it('rejects array/object conflicts and supports nonempty root arrays', () => {
+    const source = ['one', { nested: 'two' }, false];
+    expect(JSON.parse(buildJson(mergeJson([], source, 'pt', false), 'pt'))).toEqual(source);
+    const entries = mergeJson([], { items: ['one'] }, 'pt', false);
+    expect(() => mergeJson(entries, { items: { '0': 'two' } }, 'en', false)).toThrow('conflict');
   });
   it('does not silently drop values entered without a key', () => {
     expect(() => buildJson([{ ...newEntry(), values: { pt: 'text' } }], 'pt')).toThrow();

@@ -17,6 +17,7 @@ import {
   providers,
   tokensMatch,
   validateKeys,
+  valueType,
   type Entry,
 } from './core';
 import { messages, type Locale, type MessageKey } from './i18n';
@@ -161,6 +162,7 @@ export default function App() {
     (entry) =>
       entry.key.trim() &&
       !errors.has(entry.id) &&
+      valueType(entry, base) === 'string' &&
       entry.values[base]?.trim() &&
       targets.some((code) => !entry.values[code]?.trim() && !validSuggestion(entry, code)),
   );
@@ -235,7 +237,9 @@ export default function App() {
       previous.map((entry) => {
         const values = { ...entry.values };
         delete values[code];
-        return { ...entry, values };
+        const types = { ...entry.types };
+        delete types[code];
+        return { ...entry, values, types };
       }),
     );
     setSuggestions({});
@@ -308,6 +312,7 @@ export default function App() {
             remaining.has(entry.id) &&
             entry.key.trim() &&
             !currentErrors.has(entry.id) &&
+            valueType(entry, base) === 'string' &&
             entry.values[base]?.trim(),
         );
         const missingTargets = (entry: Entry) =>

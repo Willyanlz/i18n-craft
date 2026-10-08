@@ -1,6 +1,35 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
 
+test('flexible import survives editing, reload and clipboard export', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/');
+  const source = {
+    'literal.key': 'Text',
+    ' spaced ': 'Space',
+    calendar: { firstDay: 0, days: ['Sunday', 'Monday'] },
+    enabled: false,
+    optional: null,
+    empty: {},
+    list: [],
+  };
+  await importJson(page, JSON.stringify(source));
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page
+    .getByRole('textbox', { name: 'Português: calendar.days[1]', exact: true })
+    .fill('Changed');
+  source.calendar.days[1] = 'Changed';
+  await page.reload();
+  await expect(
+    page.getByRole('textbox', { name: 'Português: calendar.days[1]', exact: true }),
+  ).toHaveValue('Changed');
+  await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Copiar JSON', exact: true }).click();
+  await expect
+    .poll(() => page.evaluate(async () => JSON.parse(await navigator.clipboard.readText())))
+    .toEqual(source);
+});
+
 test('export language selection controls preview, clipboard and filename', async ({
   page,
   context,
@@ -35,7 +64,7 @@ test('all fourteen destinations are processed automatically in groups of six', a
   await configureAi(page);
   for (const lang of languages.slice(3)) {
     await page.getByRole('button', { name: 'Adicionar idioma', exact: true }).click();
-    await page.getByRole('option', { name: lang.name, exact: true }).click();
+    await page.getByRole('option', { name: new RegExp(`^${lang.name}(?: ·|$)`) }).click();
   }
   const groups: string[][] = [];
   await page.route('**/api/translate', async (route) => {
@@ -217,7 +246,8 @@ test('AI configuration and current project survive reload', async ({ page }) => 
       page.evaluate(() => JSON.parse(localStorage.getItem('i18ncraft.ai-settings') || 'null')),
     )
     .toEqual({ provider: 'gemini', model: 'custom-model', apikey: 'test-key' });
-  await page.getByLabel('Idioma da interface').last().selectOption('en');
+  await page.getByLabel('Idioma da interface').last().click();
+  await page.getByRole('option', { name: /^English/ }).click();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Great translations start here.' })).toBeVisible();
   await page.getByRole('tab', { name: /Português/ }).click();
@@ -235,7 +265,7 @@ test('global suggestions require source text in the interface language', async (
   await configureAi(page);
   await expect(page.getByRole('button', { name: 'Sugerir', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Idioma da interface', exact: true }).click();
-  await page.getByRole('option', { name: 'English', exact: true }).click();
+  await page.getByRole('option', { name: /^English/ }).click();
   await expect(page.getByRole('button', { name: 'Suggest missing', exact: true })).toHaveCount(0);
   await page.getByRole('tab', { name: /English/ }).click();
   await page.getByRole('textbox', { name: 'English: hello', exact: true }).fill('Hello');

@@ -1,4 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
+import { buildJson, mergeJson } from '../src/core';
 import {
   PROJECT_SESSION_KEY,
   SELECTED_LANGS_KEY,
@@ -22,6 +23,12 @@ function stubStorages(session: Map<string, string>, local: Map<string, string>) 
 }
 
 afterEach(() => vi.unstubAllGlobals());
+it('restores literal paths and original JSON types after reload', () => {
+  stubStorages(new Map(), new Map());
+  const source = { 'a.b': 'literal', ' ': 'space', items: ['one', 0, false, null, {}] };
+  saveProjectSession({ entries: mergeJson([], source, 'pt', false), selected: ['pt'] });
+  expect(JSON.parse(buildJson(readProjectSession().entries, 'pt'))).toEqual(source);
+});
 it('restores existing work and rewrites only supported fields', () => {
   const stored = new Map<string, string>();
   vi.stubGlobal('sessionStorage', {
