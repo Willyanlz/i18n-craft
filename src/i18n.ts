@@ -53,6 +53,9 @@ export const messages = {
     suggestBatch: 'Sugerir pendentes',
     generating: 'Traduzindo…',
     accept: 'Aceitar',
+    acceptAll: 'Aceitar todas',
+    acceptAllHelp:
+      'Aceitar todas as sugestões válidas em todos os idiomas, incluindo as ocultas pelos filtros.',
     reject: 'Recusar',
     suggestion: 'Sugestão IA',
     remove: 'Remover chave',
@@ -167,6 +170,9 @@ export const messages = {
     suggestBatch: 'Suggest missing',
     generating: 'Translating…',
     accept: 'Accept',
+    acceptAll: 'Accept all',
+    acceptAllHelp:
+      'Accept all valid suggestions in every language, including those hidden by filters.',
     reject: 'Reject',
     suggestion: 'AI suggestion',
     remove: 'Remove key',
@@ -281,6 +287,9 @@ export const messages = {
     suggestBatch: 'Sugerir pendientes',
     generating: 'Traduciendo…',
     accept: 'Aceptar',
+    acceptAll: 'Aceptar todas',
+    acceptAllHelp:
+      'Aceptar todas las sugerencias válidas en todos los idiomas, incluidas las ocultas por los filtros.',
     reject: 'Rechazar',
     suggestion: 'Sugerencia IA',
     remove: 'Eliminar clave',

@@ -158,6 +158,23 @@ export default function App() {
       : undefined;
   };
   const targets = selected.filter((code) => code !== base);
+  const suggestionCount = entries.reduce(
+    (count, entry) => count + selected.filter((code) => validSuggestion(entry, code)).length,
+    0,
+  );
+  const acceptAllSuggestions = () => {
+    setEntries((previous) =>
+      previous.map((entry) => {
+        const values = { ...entry.values };
+        for (const code of selected) {
+          const item = validSuggestion(entry, code);
+          if (item) values[code] = item.text;
+        }
+        return { ...entry, values };
+      }),
+    );
+    setSuggestions({});
+  };
   const pendingSources = entries.filter(
     (entry) =>
       entry.key.trim() &&
@@ -566,6 +583,8 @@ export default function App() {
                 onCellKey={onCellKey}
                 setValue={setValue}
                 dismissSuggestion={dismissSuggestion}
+                suggestionCount={suggestionCount}
+                acceptAllSuggestions={acceptAllSuggestions}
                 setEntries={setEntries}
                 setSuggestions={setSuggestions}
                 entries={entries}

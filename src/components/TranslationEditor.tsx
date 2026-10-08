@@ -41,6 +41,8 @@ type Props = {
   onCellKey: (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>, _last: boolean) => void;
   setValue: (entry: Entry, code: string, value: string) => void;
   dismissSuggestion: (entry: Entry, code: string, accept: boolean) => void;
+  suggestionCount: number;
+  acceptAllSuggestions: () => void;
   setEntries: Dispatch<SetStateAction<Entry[]>>;
   setSuggestions: Dispatch<SetStateAction<Suggestions>>;
   entries: Entry[];
@@ -70,6 +72,8 @@ export function TranslationEditor({
   onCellKey,
   setValue,
   dismissSuggestion,
+  suggestionCount,
+  acceptAllSuggestions,
   setEntries,
   setSuggestions,
   entries,
@@ -164,6 +168,17 @@ export function TranslationEditor({
           >
             <Sparkles size={15} />
             {t(busy ? 'generating' : 'suggestBatch')}
+          </button>
+        )}
+        {ai && suggestionCount > 0 && (
+          <button
+            className="button subtle"
+            disabled={busy}
+            title={t('acceptAllHelp')}
+            onClick={acceptAllSuggestions}
+          >
+            <Check size={15} />
+            {t('acceptAll')} ({suggestionCount})
           </button>
         )}
       </div>

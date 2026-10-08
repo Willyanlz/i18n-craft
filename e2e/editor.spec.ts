@@ -1,6 +1,46 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
 
+test('accept all applies valid suggestions across languages without overwriting edits', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await importJson(page, '{"hello":"Oi","title":"Titulo"}');
+  await configureAi(page);
+  await page.route('**/api/translate', async (route) => {
+    const request = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        translations: request.entries.map((entry: { id: string }) => ({
+          id: entry.id,
+          values: { en: 'Hello', es: 'Hola' },
+        })),
+      },
+    });
+  });
+  await page.getByRole('button', { name: 'Sugerir pendentes', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Aceitar todas (4)', exact: true })).toBeEnabled();
+  await page.getByRole('textbox', { name: 'Português: title', exact: true }).fill('Alterado');
+  await page.getByRole('tab', { name: /English/ }).click();
+  await page.getByRole('textbox', { name: 'English: hello', exact: true }).fill('Manual');
+  await page.getByRole('button', { name: 'Aceitar todas (1)', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'English: hello', exact: true })).toHaveValue(
+    'Manual',
+  );
+  await expect(page.getByRole('textbox', { name: 'English: title', exact: true })).toHaveValue('');
+  await page.getByRole('tab', { name: /Español/ }).click();
+  await expect(page.getByRole('textbox', { name: 'Español: hello', exact: true })).toHaveValue(
+    'Hola',
+  );
+  await expect(page.getByRole('textbox', { name: 'Español: title', exact: true })).toHaveValue('');
+  await expect(page.getByRole('button', { name: /^Aceitar todas/ })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('tab', { name: /Español/ }).click();
+  await expect(page.getByRole('textbox', { name: 'Español: hello', exact: true })).toHaveValue(
+    'Hola',
+  );
+});
+
 test('flexible import survives editing, reload and clipboard export', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.goto('/');
