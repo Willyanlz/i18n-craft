@@ -31,10 +31,14 @@ dialog::backdrop {
   justify-content: center;
   gap: 10px;
   background: var(--soft);
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--muted);
   padding: 19px;
   cursor: pointer;
   color: var(--muted);
+}
+.modal-inner .file-picker.dragging {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 .file-picker input {
   font-size: 11px;

@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react';
+import { useState, type Dispatch, type SetStateAction } from 'react';
 import { Upload } from 'lucide-react';
 import { languages } from '../core';
 import type { Locale } from '../i18n';
@@ -36,6 +36,22 @@ export function ImportDialog({
   importJson,
   busy,
 }: Props) {
+  const [dragging, setDragging] = useState(false);
+  const readFile = (file?: File) => {
+    if (!file || busy) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setImportText('');
+      setImportError(t('fileSize'));
+      return;
+    }
+    void file
+      .text()
+      .then((text) => {
+        setImportText(text);
+        setImportError('');
+      })
+      .catch(() => setImportError(t('importError')));
+  };
   return (
     <Modal
       title={t('importTitle')}
@@ -56,7 +72,22 @@ export function ImportDialog({
           locale={locale}
         />
       </label>
-      <label className="file-picker">
+      <label
+        className={`file-picker${dragging ? ' dragging' : ''}`}
+        onDragOver={(event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = busy ? 'none' : 'copy';
+          if (!busy) setDragging(true);
+        }}
+        onDragLeave={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false);
+        }}
+        onDrop={(event) => {
+          event.preventDefault();
+          setDragging(false);
+          readFile(event.dataTransfer.files[0]);
+        }}
+      >
         <Upload size={22} />
         {t('file')}
         <input
@@ -64,20 +95,7 @@ export function ImportDialog({
           disabled={busy}
           accept=".json,application/json"
           onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (!file) return;
-            if (file.size > 2 * 1024 * 1024) {
-              setImportText('');
-              setImportError(t('fileSize'));
-              return;
-            }
-            void file
-              .text()
-              .then((text) => {
-                setImportText(text);
-                setImportError('');
-              })
-              .catch(() => setImportError(t('importError')));
+            readFile(event.target.files?.[0]);
           }}
         />
       </label>
