@@ -19,6 +19,7 @@ type Props = {
   setOverwrite: Dispatch<SetStateAction<boolean>>;
   importError: string;
   importJson: () => void;
+  busy: boolean;
 };
 export function ImportDialog({
   t,
@@ -33,14 +34,22 @@ export function ImportDialog({
   setOverwrite,
   importError,
   importJson,
+  busy,
 }: Props) {
   return (
-    <Modal title={t('importTitle')} closeLabel={t('close')} onClose={() => setModal(null)}>
+    <Modal
+      title={t('importTitle')}
+      closeLabel={t('close')}
+      onClose={() => {
+        if (!busy) setModal(null);
+      }}
+    >
       <p>{t('importText')}</p>
       <label>
         {t('importLanguage')}
         <LangPicker
           label={t('importLanguage')}
+          disabled={busy}
           value={importLang}
           options={languages.map((lang) => lang.code)}
           onPick={setImportLang}
@@ -52,6 +61,7 @@ export function ImportDialog({
         {t('file')}
         <input
           type="file"
+          disabled={busy}
           accept=".json,application/json"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -75,6 +85,7 @@ export function ImportDialog({
         {t('paste')}
         <textarea
           className="import-text"
+          disabled={busy}
           value={importText}
           onChange={(event) => {
             setImportText(event.target.value);
@@ -87,6 +98,7 @@ export function ImportDialog({
         {t('conflictMode')}
         <select
           value={overwrite ? 'overwrite' : 'keep'}
+          disabled={busy}
           onChange={(event) => setOverwrite(event.target.value === 'overwrite')}
         >
           <option value="keep">{t('keep')}</option>
@@ -99,12 +111,16 @@ export function ImportDialog({
         </p>
       )}
       <div className="modal-actions">
-        <button className="button" onClick={() => setModal(null)}>
+        <button className="button" disabled={busy} onClick={() => setModal(null)}>
           {t('cancel')}
         </button>
-        <button className="button primary" disabled={!importText.trim()} onClick={importJson}>
+        <button
+          className="button primary"
+          disabled={busy || !importText.trim()}
+          onClick={importJson}
+        >
           <Upload size={15} />
-          {t('merge')}
+          {t(busy ? 'importing' : 'merge')}
         </button>
       </div>
     </Modal>

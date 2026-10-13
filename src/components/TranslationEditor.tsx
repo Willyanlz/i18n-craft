@@ -1,20 +1,9 @@
+import { TranslationRow } from './TranslationRow';
 import type { Dispatch, SetStateAction } from 'react';
-import {
-  Check,
-  ChevronDown,
-  ChevronUp,
-  Globe2,
-  Plus,
-  Search,
-  Sparkles,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Globe2, Plus, Search, Sparkles, X } from 'lucide-react';
 import { type KeyboardEvent, useState } from 'react';
-import { langName, languages, tokensMatch, valueType, type Entry } from '../core';
+import { langName, languages, type Entry } from '../core';
 import { flagFor } from '../flags';
-import { editKey, isNestedKey, keyLabel } from '../json-format';
-import { type Locale, type MessageKey } from '../i18n';
 import type { Suggestion, Suggestions, Translate } from '../types';
 
 import { LangPicker } from './LangPicker';
@@ -77,7 +66,8 @@ function PaginationBar({
     </div>
   );
 }
-type Props = {
+export type EditorProps = {
+  onEditingChange: (id: string | null) => void;
   t: Translate;
   selected: string[];
   pendingByLang: { [k: string]: number };
@@ -116,6 +106,7 @@ type Props = {
   addEntry: () => void;
 };
 export function TranslationEditor({
+  onEditingChange,
   t,
   selected,
   pendingByLang,
@@ -152,7 +143,7 @@ export function TranslationEditor({
   setSuggestions,
   entries,
   addEntry,
-}: Props) {
+}: EditorProps) {
   const [valuesCollapsed, setValuesCollapsed] = useState(false);
   return (
     <section className="editor-card">
@@ -309,127 +300,28 @@ export function TranslationEditor({
             </tr>
           </thead>
           <tbody hidden={valuesCollapsed}>
-            {paged.map((entry, index) => {
-              const item = validSuggestion(entry, active);
-              const missing = !entry.values[active]?.trim();
-              const missingId = `missing-${entry.id}-${active}`;
-              const baseText = active === base ? '' : entry.values[base] || '';
-              const mismatch =
-                active !== base &&
-                entry.values[active] &&
-                entry.values[base] &&
-                !tokensMatch(entry.values[base], entry.values[active]);
-              return (
-                <tr key={entry.id} className={errors.has(entry.id) ? 'invalid-row' : ''}>
-                  <td className="row-number">{String(pageStart + index + 1).padStart(2, '0')}</td>
-                  <td className="key-cell">
-                    <input
-                      id={`key-${entry.id}`}
-                      aria-label={`${t('key')} ${pageStart + index + 1}`}
-                      className="key-input"
-                      value={keyLabel(entry)}
-                      placeholder={t('keyPlaceholder')}
-                      onChange={(event) =>
-                        updateEntry(entry.id, editKey(event.target.value, isNestedKey(entry)))
-                      }
-                      onKeyDown={(event) => onCellKey(event, false)}
-                    />
-                    <label className="nesting-toggle" title={t('nestingHelp')}>
-                      <input
-                        type="checkbox"
-                        checked={isNestedKey(entry)}
-                        aria-label={`${t('nesting')} ${pageStart + index + 1}`}
-                        onChange={(event) =>
-                          updateEntry(entry.id, editKey(keyLabel(entry), event.target.checked))
-                        }
-                      />
-                      {t('nesting')}
-                    </label>
-                    {errors.has(entry.id) && (
-                      <span className="field-error">{t(errors.get(entry.id) as MessageKey)}</span>
-                    )}
-                  </td>
-                  <td className="value-cell">
-                    {valueType(entry, active) !== 'string' && (
-                      <span className="muted">{valueType(entry, active)}</span>
-                    )}
-                    {valuesCollapsed ? (
-                      <span className="value-collapsed">
-                        {entry.values[active]?.trim() || t('fillMissing')}
-                      </span>
-                    ) : (
-                      <>
-                        <textarea
-                          id={`value-${entry.id}-${active}`}
-                          rows={2}
-                          className={missing ? 'value-missing' : undefined}
-                          aria-invalid={missing || undefined}
-                          aria-describedby={missing ? missingId : undefined}
-                          aria-label={`${langName(active)}: ${entry.key || index + 1}`}
-                          placeholder={t('fillMissing')}
-                          value={entry.values[active] || ''}
-                          onChange={(event) => setValue(entry, active, event.target.value)}
-                          onKeyDown={(event) => onCellKey(event, index === paged.length - 1)}
-                        />
-                        {baseText ? (
-                          <span className="base-reference">
-                            <img
-                              className="lang-flag"
-                              src={flagFor(base)}
-                              alt=""
-                              aria-hidden="true"
-                            />
-                            <span className="sr-only">{`${langName(base)}: `}</span>
-                            <span className="base-reference-text">{baseText}</span>
-                          </span>
-                        ) : null}
-                      </>
-                    )}
-                    {missing && (
-                      <span id={missingId} className="sr-only">
-                        {t('valueMissing')}
-                      </span>
-                    )}
-                    {mismatch && <span className="field-error">{t('tokenLabel')}</span>}
-                    {item && (
-                      <div className="suggestion">
-                        <span>
-                          <Sparkles size={12} />
-                          {t('suggestion')}
-                        </span>
-                        <p>{item.text}</p>
-                        <div>
-                          <button onClick={() => dismissSuggestion(entry, active, true)}>
-                            <Check size={13} />
-                            {t('accept')}
-                          </button>
-                          <button onClick={() => dismissSuggestion(entry, active, false)}>
-                            <X size={13} />
-                            {t('reject')}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="icon-button delete-button"
-                      aria-label={`${t('remove')} ${entry.key}`}
-                      onClick={() => {
-                        setEntries((previous) => previous.filter((item) => item.id !== entry.id));
-                        setSuggestions((previous) => {
-                          const next = { ...previous };
-                          delete next[entry.id];
-                          return next;
-                        });
-                      }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {paged.map((entry, index) => (
+              <TranslationRow
+                key={entry.id}
+                entry={entry}
+                index={index}
+                pageStart={pageStart}
+                last={index === paged.length - 1}
+                item={validSuggestion(entry, active)}
+                error={errors.get(entry.id)}
+                valuesCollapsed={valuesCollapsed}
+                t={t}
+                active={active}
+                base={base}
+                updateEntry={updateEntry}
+                onCellKey={onCellKey}
+                setValue={setValue}
+                dismissSuggestion={dismissSuggestion}
+                setEntries={setEntries}
+                setSuggestions={setSuggestions}
+                onEditingChange={onEditingChange}
+              />
+            ))}
           </tbody>
         </table>
       </div>

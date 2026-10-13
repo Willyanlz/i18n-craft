@@ -21,7 +21,10 @@ export function Modal({
   return (
     <dialog
       ref={dialog}
-      onCancel={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

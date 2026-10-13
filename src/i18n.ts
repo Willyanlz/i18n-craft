@@ -1,5 +1,12 @@
 export const messages = {
   pt: {
+    saving: 'Salvando…',
+    saveFailed: 'Falha ao salvar — exporte uma cópia',
+    saved: 'Salvo nesta sessão',
+    aiProgress: 'Traduções processadas:',
+    importing: 'Importando…',
+    preparingExport: 'Preparando download…',
+    exportFailed: 'Não foi possível preparar o download. Tente novamente.',
     aiUnavailableError:
       'O provedor de IA está temporariamente indisponível após novas tentativas. As sugestões anteriores foram mantidas. Tente novamente em alguns instantes.',
     nesting: 'Aninhar',
@@ -131,6 +138,13 @@ export const messages = {
     tokenLabel: 'Variáveis ou tags diferentes do texto base',
   },
   en: {
+    saving: 'Saving…',
+    saveFailed: 'Save failed — export a copy',
+    saved: 'Saved in this session',
+    aiProgress: 'Translations processed:',
+    importing: 'Importing…',
+    preparingExport: 'Preparing download…',
+    exportFailed: 'Could not prepare the download. Please try again.',
     aiUnavailableError:
       'The AI provider is temporarily unavailable after retries. Previous suggestions were kept. Please try again shortly.',
     nesting: 'Nest key',
@@ -257,6 +271,13 @@ export const messages = {
     tokenLabel: 'Variables or tags differ from base text',
   },
   es: {
+    saving: 'Guardando…',
+    saveFailed: 'Error al guardar — exporta una copia',
+    saved: 'Guardado en esta sesión',
+    aiProgress: 'Traducciones procesadas:',
+    importing: 'Importando…',
+    preparingExport: 'Preparando descarga…',
+    exportFailed: 'No se pudo preparar la descarga. Inténtalo de nuevo.',
     aiUnavailableError:
       'El proveedor de IA está temporalmente indisponible tras los reintentos. Se conservaron las sugerencias anteriores. Inténtalo de nuevo en unos momentos.',
     nesting: 'Anidar',

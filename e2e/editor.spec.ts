@@ -1,5 +1,125 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
+import { readFile } from 'node:fs/promises';
+import { strFromU8, unzipSync } from 'fflate';
+
+test('worker ZIP exports current values and copy ignores delayed preview', async ({
+  page,
+  context,
+}) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.clock.install();
+  await page.goto('/');
+  await importJson(page, '{"hello":"Oi"}');
+  await page.getByRole('textbox', { name: 'Português: hello', exact: true }).fill('Atual');
+  await page.getByRole('button', { name: 'Copiar JSON', exact: true }).click();
+  expect(JSON.parse(await page.evaluate(() => navigator.clipboard.readText()))).toEqual({
+    hello: 'Atual',
+  });
+  await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Baixar todos (.zip)', exact: true }).click();
+  const result = await download;
+  const files = unzipSync(await readFile((await result.path())!));
+  expect(JSON.parse(strFromU8(files['pt.json']))).toEqual({ hello: 'Atual' });
+  expect(JSON.parse(strFromU8(files['en.json']))).toEqual({ hello: '' });
+});
+
+test('missing filter keeps the edited row until focus leaves it', async ({ page }) => {
+  await page.goto('/');
+  await importJson(page, '{"hello":"Oi","other":"Outro"}');
+  await page.getByRole('tab', { name: /English/ }).click();
+  await page
+    .getByRole('combobox', { name: 'Todas as chaves', exact: true })
+    .selectOption('missing');
+  const input = page.getByRole('textbox', { name: 'English: hello', exact: true });
+  await input.focus();
+  await page.keyboard.type('A complete sentence', { delay: 20 });
+  await expect(input).toHaveValue('A complete sentence');
+  await expect(input).toBeFocused();
+  await page.getByRole('textbox', { name: 'English: other', exact: true }).focus();
+  await expect(input).toHaveCount(0);
+});
+
+test('rejecting a restored suggestion on page two keeps its input focused', async ({ page }) => {
+  await page.addInitScript(() => {
+    sessionStorage.setItem(
+      'i18ncraft.project',
+      JSON.stringify({
+        version: 1,
+        selected: ['pt', 'en'],
+        entries: Array.from({ length: 60 }, (_, i) => ({
+          id: String(i),
+          key: `key${i}`,
+          values: { pt: 'Oi' },
+        })),
+        suggestions: { '59': { en: { text: 'Hello', source: 'Oi', key: 'key59', base: 'pt' } } },
+      }),
+    );
+  });
+  await page.goto('/');
+  await page.getByRole('tab', { name: /English/ }).click();
+  await page.locator('.pagination-top button').last().click();
+  await page.getByRole('button', { name: 'Recusar', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: 'English: key59', exact: true })).toBeFocused();
+});
+
+test('AI cancellation retains completed batches and restores suggestions on reload', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await importJson(
+    page,
+    JSON.stringify(Object.fromEntries(Array.from({ length: 101 }, (_, i) => [`key${i}`, 'Oi']))),
+  );
+  await configureAi(page);
+  let calls = 0;
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/translate', async (route) => {
+    calls++;
+    const request = route.request().postDataJSON();
+    if (calls === 2) {
+      await gate;
+      await route.abort().catch(() => {});
+      return;
+    }
+    await route.fulfill({
+      json: {
+        translations: request.entries.map((entry: { id: string }) => ({
+          id: entry.id,
+          values: { en: 'Hello', es: 'Hola' },
+        })),
+      },
+    });
+  });
+  await page.getByRole('button', { name: 'Sugerir pendentes', exact: true }).click();
+  await expect.poll(() => calls).toBe(2);
+  await expect(page.locator('.work-status')).toContainText('200 / 202');
+  await page.getByRole('button', { name: 'Cancelar', exact: true }).click();
+  release();
+  await expect(page.getByRole('button', { name: 'Cancelar', exact: true })).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('tab', { name: /English/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Aceitar todas (100)', exact: true }),
+  ).toBeEnabled();
+});
+
+test('JSON tree mounts descendants only while the branch is expanded', async ({ page }) => {
+  await page.goto('/');
+  await importJson(page, '{"parent":{"child":"Text"}}');
+  await page.locator('.segmented button').last().click();
+  const branch = page.locator('.json-tree details').first();
+  await expect(branch).toBeVisible();
+  await expect(branch.locator('ul')).toHaveCount(0);
+  await branch.locator('summary').click();
+  await expect(branch.locator('ul')).toContainText('child');
+  await branch.locator('summary').click();
+  await expect(branch.locator('ul')).toHaveCount(0);
+});
 
 test('editing an incomplete nested key does not crash the delayed preview', async ({ page }) => {
   const errors: string[] = [];
@@ -360,8 +480,8 @@ test('Gemini 404 identifies the unavailable model and lets the user retry', asyn
     }),
   );
   await page.getByRole('button', { name: 'Sugerir pendentes', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('gemini-3.5-flash-lite');
-  await expect(page.getByRole('status')).toContainText('Modelo não encontrado');
+  await expect(page.locator('.toast')).toContainText('gemini-3.5-flash-lite');
+  await expect(page.locator('.toast')).toContainText('Modelo não encontrado');
   await expect(page.getByRole('button', { name: 'Sugerir pendentes', exact: true })).toBeEnabled();
   await page.getByRole('tab', { name: /English/ }).click();
   await expect(page.getByRole('textbox', { name: 'English: hello', exact: true })).toHaveValue('');

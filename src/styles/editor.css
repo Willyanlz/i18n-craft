@@ -450,6 +450,16 @@ td.row-number {
   min-width: 220px;
   width: 25%;
 }
+.work-status {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 32px;
+  color: var(--muted);
+  font-size: 11px;
+}
 .nesting-toggle {
   display: flex;
   flex-direction: row;

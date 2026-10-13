@@ -1,8 +1,9 @@
+import type { Suggestions } from './types';
 import { languages, type Entry } from './core';
 
 export const PROJECT_SESSION_KEY = 'i18ncraft.project';
 export const SELECTED_LANGS_KEY = 'i18ncraft.selected';
-type ProjectSession = { entries: Entry[]; selected: string[] };
+type ProjectSession = { entries: Entry[]; selected: string[]; suggestions?: Suggestions };
 const isValidCode = (code: unknown): code is string =>
   typeof code === 'string' && languages.some((lang) => lang.code === code);
 export function readSelectedLangs(fallback: string[] = ['pt', 'en', 'es']): string[] {
@@ -71,6 +72,7 @@ export function readProjectSession(): ProjectSession {
         ...(nested !== undefined ? { nested } : {}),
       })),
       selected: [...new Set<string>(saved.selected)],
+      ...(saved.suggestions ? { suggestions: cleanSuggestions(saved.suggestions) } : {}),
     };
   } catch {
     return empty;
@@ -92,6 +94,29 @@ export function saveProjectSession(project: ProjectSession) {
           ...(nested !== undefined ? { nested } : {}),
         })),
         selected: project.selected,
+        ...(project.suggestions ? { suggestions: project.suggestions } : {}),
       }),
     );
+}
+
+function cleanSuggestions(value: unknown): Suggestions {
+  const result: Suggestions = {};
+  if (!value || typeof value !== 'object') return result;
+  for (const [id, langs] of Object.entries(value)) {
+    if (!langs || typeof langs !== 'object') continue;
+    const valid = Object.entries(langs).filter(([code, raw]) => {
+      const item = raw as Record<string, unknown>;
+      return (
+        isValidCode(code) &&
+        item &&
+        typeof item.text === 'string' &&
+        typeof item.source === 'string' &&
+        typeof item.key === 'string' &&
+        isValidCode(item.base)
+      );
+    });
+    if (valid.length)
+      Object.defineProperty(result, id, { value: Object.fromEntries(valid), enumerable: true });
+  }
+  return result;
 }

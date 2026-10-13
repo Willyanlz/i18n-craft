@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { createEntryValidator } from '../src/json-format';
 import {
   buildJson,
   flattenJson,
@@ -17,6 +18,20 @@ it('preserves punctuation inside strings when removing trailing commas', () => {
 });
 
 describe('JSON editing and merging', () => {
+  it('cached validation follows value edits, conflicting renames and row deletion', () => {
+    const validate = createEntryValidator();
+    let entries = mergeJson([], { count: 1, other: 'Text' }, 'pt', false);
+    expect(validate(entries)).toEqual(validateKeys(entries));
+    entries = entries.map((entry, i) => (i ? entry : { ...entry, values: { pt: 'invalid' } }));
+    expect(validate(entries)).toEqual(validateKeys(entries));
+    entries = entries.map((entry, i) =>
+      i ? { ...entry, key: 'count.child' } : { ...entry, values: { pt: '2' } },
+    );
+    expect(validate(entries)).toEqual(validateKeys(entries));
+    entries = entries.slice(1);
+    expect(validate(entries)).toEqual(validateKeys(entries));
+    expect(validate([]).size).toBe(0);
+  });
   it('round trips nested text, unicode, empty values and placeholders', () => {
     const source = { automation: { example: 'Olá, {{name}}!', empty: '' }, title: 'Admissão' };
     const entries = mergeJson([], source, 'pt', false);

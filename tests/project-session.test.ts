@@ -23,6 +23,21 @@ function stubStorages(session: Map<string, string>, local: Map<string, string>) 
 }
 
 afterEach(() => vi.unstubAllGlobals());
+it('restores pending suggestions and drops malformed suggestion records', () => {
+  stubStorages(new Map(), new Map());
+  const entries = mergeJson([], { hello: 'Oi' }, 'pt', false);
+  const item = { text: 'Hello', source: 'Oi', key: 'hello', base: 'pt' };
+  saveProjectSession({
+    entries,
+    selected: ['pt', 'en'],
+    suggestions: { [entries[0].id]: { en: item } },
+  });
+  expect(readProjectSession().suggestions).toEqual({ [entries[0].id]: { en: item } });
+  const stored = JSON.parse(sessionStorage.getItem(PROJECT_SESSION_KEY)!);
+  stored.suggestions.bad = { en: { text: 12 } };
+  sessionStorage.setItem(PROJECT_SESSION_KEY, JSON.stringify(stored));
+  expect(readProjectSession().suggestions).toEqual({ [entries[0].id]: { en: item } });
+});
 it('restores literal paths and original JSON types after reload', () => {
   stubStorages(new Map(), new Map());
   const source = { 'a.b': 'literal', ' ': 'space', items: ['one', 0, false, null, {}] };

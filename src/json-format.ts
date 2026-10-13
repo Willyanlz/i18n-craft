@@ -137,6 +137,38 @@ export function validateKeys(entries: Entry[]): Map<string, string> {
   return errors;
 }
 
+// Key relationships only change when keys/rows change; typed values are
+// checked once per immutable entry object, not once per field in the project.
+export function createEntryValidator() {
+  let previous: Entry[] = [];
+  let structural = new Map<string, string>();
+  const values = new WeakMap<Entry, boolean>();
+  return (entries: Entry[]) => {
+    if (
+      entries.length !== previous.length ||
+      entries.some((entry, i) => entry.id !== previous[i].id || entry.key !== previous[i].key)
+    ) {
+      structural = validateKeys(entries.map((entry) => ({ ...entry, values: {} })));
+      previous = entries;
+    }
+    const errors = new Map(structural);
+    for (const entry of entries) {
+      if (!entry.key.trim() && Object.values(entry.values).some(Boolean))
+        errors.set(entry.id, 'empty');
+      if (!values.has(entry)) {
+        try {
+          for (const lang of Object.keys(entry.values)) readValue(entry, lang);
+          values.set(entry, true);
+        } catch {
+          values.set(entry, false);
+        }
+      }
+      if (!values.get(entry)) errors.set(entry.id, 'invalidValue');
+    }
+    return errors;
+  };
+}
+
 function flatten(value: unknown): { key: string; text: string; type: ValueType }[] {
   if (!value || typeof value !== 'object') throw new Error('shape');
   const output: { key: string; text: string; type: ValueType }[] = [];

@@ -118,7 +118,15 @@ Requests send source text through `/api/translate` to the selected provider. Avo
 
 ## Session data and API keys
 
-Keys, translations, and selected languages are saved automatically in `sessionStorage` under `i18ncraft.project`. **Reloading the tab restores your current work**, including unfinished rows. Use **Clear project** to remove the current keys, values, and saved session before starting again. This is session storage, not a permanent project archive; export files for long-term storage. Pending AI suggestions are not restored.
+Keys, translations, selected languages, and pending AI suggestions are saved automatically in `sessionStorage` under `i18ncraft.project`. **Reloading the tab restores your current work**, including unfinished rows and suggestions that still match their source. Use **Clear project** to remove the current project and saved session. This is session storage, not a permanent project archive; export files for long-term storage.
+
+The editor shows saving status. Normal saves serialize the snapshot in a worker after 500 ms without edits; visibility changes and navigation flush the latest state. Browser storage limits still apply and save failures are reported.
+
+## Large projects
+
+The table renders 20, 50, or 100 rows per page, with memoized rows and cached validation. Counters settle after 150 ms, search after 120 ms, and the JSON preview after 400 ms. Copy and download always serialize current values. Tree branches mount their descendants only when expanded. Importing and ZIP generation run in a worker with a busy indicator.
+
+AI generation shows processed translations and can be cancelled while retaining completed batches. Pending suggestions survive reloads. Accept all applies only to the selected language. A row stays visible while being edited under the missing-value filter; rejecting a suggestion returns focus to its row on the correct page.
 
 The interface language and theme are saved automatically in `localStorage` under `i18ncraft.locale` and `i18ncraft.theme`. AI settings are also saved automatically under `i18ncraft.ai-settings` in this format:
 
