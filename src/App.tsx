@@ -285,13 +285,16 @@ export default function App() {
   // expensive buildJson (~200KB stringify on large projects) runs 400ms
   // after typing stops. Small projects (<500 keys) stay effectively instant.
   const previewEntries = useDebouncedValue(entries, 400);
+  // Validate the same snapshot that is serialized: it can still contain an
+  // incomplete key after the live input has already become valid again.
+  const previewErrors = useMemo(() => validateKeys(previewEntries), [previewEntries]);
   const json = useMemo(
     () => (errors.size ? '' : buildJson(entries, effectivePreviewLang)),
     [entries, effectivePreviewLang, errors],
   );
   const previewJson = useMemo(
-    () => (errors.size ? '' : buildJson(previewEntries, effectivePreviewLang)),
-    [previewEntries, effectivePreviewLang, errors],
+    () => (previewErrors.size ? '' : buildJson(previewEntries, effectivePreviewLang)),
+    [previewEntries, effectivePreviewLang, previewErrors],
   );
   const updateEntry = (id: string, change: Partial<Entry>) =>
     setEntries((previous) =>
@@ -553,7 +556,7 @@ export default function App() {
       previewLang={effectivePreviewLang}
       setPreviewLang={setPreviewLang}
       languages={modal === 'export' ? selected : undefined}
-      errors={errors}
+      errors={modal === 'export' || errors.size ? errors : previewErrors}
       // Lazy preview: the editor panel uses the debounced JSON so typing
       // never blocks on a ~200KB stringify; export actions use the live
       // `json` so copy/download are always exact.

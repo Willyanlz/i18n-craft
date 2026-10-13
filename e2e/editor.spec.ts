@@ -1,6 +1,32 @@
 import { expect, test, type Page } from '@playwright/test';
 import { languages } from '../src/core';
 
+test('editing an incomplete nested key does not crash the delayed preview', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.clock.install();
+  await page.goto('/');
+  await importJson(page, '{"example":{"ex":"Text"}}');
+  const key = page.getByRole('textbox', { name: 'CHAVE 1', exact: true });
+  await expect(page.getByRole('checkbox', { name: 'Aninhar 1', exact: true })).toBeChecked();
+  await key.fill('example.');
+  await page.clock.runFor(450);
+  await expect(page.getByRole('button', { name: 'Exportar', exact: true })).toBeDisabled();
+  await key.press('End');
+  await key.press('Backspace');
+  await expect(key).toHaveValue('example');
+  await page.clock.runFor(450);
+  await expect
+    .poll(async () => JSON.parse(await page.locator('pre').innerText()))
+    .toEqual({ example: 'Text' });
+  await key.fill('example.ex');
+  await page.clock.runFor(450);
+  await expect
+    .poll(async () => JSON.parse(await page.locator('pre').innerText()))
+    .toEqual({ example: { ex: 'Text' } });
+  expect(errors).toEqual([]);
+});
+
 test('per-key nesting toggles literal dots and survives reload', async ({ page }) => {
   await page.goto('/');
   await importJson(page, '{"a.b":"literal","parent":{"child":"nested"}}');
